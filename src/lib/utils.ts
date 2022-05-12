@@ -32,7 +32,7 @@ export const setupCanvas = (canvas: HTMLCanvasElement) => {
 
   // line style
   ctx.lineCap = "round";
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 1;
 
   return { ctx, center, width, height, dpr };
 };
