@@ -1,41 +1,32 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { setupCanvas } from "./lib/utils";
-import Vec2 from "./lib/vec2";
+import { useReducer, useEffect, useMemo, useRef, useState } from "react";
+import { setupCanvas, sortByNormals } from "./lib/utils";
 import { Mesh } from "./lib/mesh";
 import { shapeToLines } from "./lib/collision";
 import Shape from "./lib/shape";
 import { generatePolygon, generateUnitPlacement } from "./lib/generation";
 import "./App.css";
+import Vec2 from "./lib/vec2";
 
 const DUMMY_CANVAS = document.createElement("canvas");
 
 function App() {
+  const [ignored, forceUpdate] = useReducer((x) => x + 1, 0);
   const canvasRef = useRef<HTMLCanvasElement>(DUMMY_CANVAS);
-  const { ctx, center, width, height } = useMemo(() => setupCanvas(canvasRef.current), [canvasRef.current]);
+  const { ctx, center, width, height, dpr } = useMemo(() => setupCanvas(canvasRef.current), [canvasRef.current]);
   const [unitCount, setUnitCount] = useState(5);
-  const [plot] = useState(new Mesh(new Shape([])).setColor("#9c9"));
-  const units = useRef<Mesh[]>([]);
   const [spacing, setSpacing] = useState(20);
+  const plot = useRef(new Mesh(new Shape([])).setColor("#9c9"));
+  const units = useRef<Mesh[]>([]);
+  const offset = useRef(new Vec2(0, 0));
 
   const generate = () => {
     // regenerate plot mesh
-    plot.setShape(generatePolygon(5, 8, 0.2, 0.4).scale(width, height)).setPosition(center);
+    const shape = generatePolygon(5, 8, 0.2, 0.4).scale(width, height);
+    plot.current.setShape(shape).setPosition(center);
 
     // sort lines by how close the normal matches the south direction
-    const lines = shapeToLines(plot.shapeWorld)
-      .map((line, index) => {
-        const { x, y } = line.relative().normalise();
-        const normal = new Vec2(-y, x);
-        return {
-          index,
-          line,
-          normal,
-        };
-      })
-      .sort((a, b) => a.normal.y - b.normal.y)
-      .map((data) => data.line);
-
-    units.current = generateUnitPlacement(unitCount, lines, spacing);
+    const lines = sortByNormals(shapeToLines(plot.current.shapeWorld));
+    units.current = generateUnitPlacement(lines, { count: unitCount, spacing });
   };
 
   // Generation / Regeneration
@@ -43,20 +34,50 @@ function App() {
 
   // render effect
   useEffect(() => {
+    // clear
     ctx.clearRect(0, 0, width, height);
-    plot.render(ctx);
+
+    // translate
+    const [offX, offY] = offset.current;
+    ctx.resetTransform();
+    ctx.translate(offX, offY);
+
+    // render
+    plot.current.render(ctx);
     units.current.forEach((unit) => unit.render(ctx));
-  }, [unitCount, spacing]);
+  }, [unitCount, spacing, ignored]);
 
   useEffect(() => {
-    const onclick = (e: MouseEvent) => {
-      console.log(e.clientX, e.clientY);
+    const canvas = canvasRef.current;
+    let pointerdown = false;
+
+    const ondrag = (e: MouseEvent) => {
+      if (!pointerdown) return;
+
+      e.preventDefault();
+      const movement = new Vec2(e.movementX, e.movementY);
+      offset.current = offset.current.add(movement);
+      forceUpdate();
     };
 
-    canvasRef.current.addEventListener("click", onclick);
+    const onpointerdown = () => {
+      pointerdown = true;
+      canvas.style.cursor = "grab";
+    };
+
+    const onpointerup = () => {
+      pointerdown = false;
+      canvas.style.cursor = "auto";
+    };
+
+    canvas.addEventListener("mousemove", ondrag);
+    canvas.addEventListener("pointerdown", onpointerdown);
+    canvas.addEventListener("pointerup", onpointerup);
 
     return () => {
-      canvasRef.current.removeEventListener("click", onclick);
+      canvas.removeEventListener("mousemove", ondrag);
+      canvas.removeEventListener("pointerdown", onpointerdown);
+      canvas.removeEventListener("pointerup", onpointerup);
     };
   }, [canvasRef.current]);
 
@@ -86,7 +107,11 @@ const Controls = ({ onCountChange, onSpacingChange }: ControlProps) => {
         </div>
         <div>
           <p>Spacing</p>
-          <input type="range" min={0} max={60} step={5} defaultValue={20} onChange={onSpacingChange} />
+          <input type="range" min={0} max={60} step={5} defaultValue={0} onChange={onSpacingChange} />
+        </div>
+        <div>
+          <p>Offset</p>
+          <input type="range" min={-1000} max={1000} step={10} defaultValue={0} />
         </div>
       </div>
     </div>

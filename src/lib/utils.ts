@@ -1,6 +1,7 @@
 import Shape from "./shape";
 import Vec2 from "./vec2";
 import Random from "./random";
+import Line from "./line";
 
 export namespace COLORS {
   export const WHITE = "#ffffff";
@@ -33,5 +34,15 @@ export const setupCanvas = (canvas: HTMLCanvasElement) => {
   ctx.lineCap = "round";
   ctx.lineWidth = 2;
 
-  return { ctx, center, width, height };
+  return { ctx, center, width, height, dpr };
+};
+
+export const sortByNormals = (lines: Line[]) => {
+  return lines
+    .map((line) => ({
+      line,
+      normal: line.relative().normalise().perpendicular(),
+    }))
+    .sort((a, b) => a.normal.y - b.normal.y)
+    .map((data) => data.line);
 };

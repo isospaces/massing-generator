@@ -9,8 +9,14 @@ import { PI2, cos, sin } from "./math";
 const UNIT_1 = SHAPES.RECTANGLE.clone().scale(new Vec2(20, 60));
 const UNIT_3 = SHAPES.RECTANGLE.clone().scale(new Vec2(60, 60));
 
-export const generateUnitPlacement = (count: number, lines: Line[], spacing: number) => {
-  const shapes = [UNIT_1, UNIT_3];
+export interface UnitGenerationOptions {
+  count: number;
+  spacing?: number;
+}
+
+export const generateUnitPlacement = (lines: Line[], options: UnitGenerationOptions) => {
+  const { count, spacing } = { ...{ spacing: 0 }, ...options };
+
   const arr = [];
 
   const dimensions = new Vec2(40, 120);
@@ -26,14 +32,12 @@ export const generateUnitPlacement = (count: number, lines: Line[], spacing: num
     const xpad = dimensions.x / 2 + padding.x;
     const distanceCoefficient = dimensions.x + spacing;
 
-    console.log(`line: ${line} - ${remainingUnits}`);
-
     for (let i = 0; i < remainingUnits; i++) {
       const distance = distanceCoefficient * i + xpad;
       if (distance > maxDistance - xpad) break;
 
       const position = line.a.add(direction.multiplyScalar(distance).add(inset));
-      arr.push(new Mesh(shapes[0]).setPosition(position).setRotation(-angle));
+      arr.push(new Mesh(UNIT_1).setPosition(position).setRotation(-angle));
       remainingUnits--;
     }
 

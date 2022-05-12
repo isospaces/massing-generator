@@ -73,6 +73,10 @@ export default class Vec2 extends Array<number> {
     return Vec2.multiplyScalar(this, value);
   }
 
+  perpendicular() {
+    return new Vec2(-this.y, this.x);
+  }
+
   clone() {
     return new Vec2(this.x, this.y);
   }
