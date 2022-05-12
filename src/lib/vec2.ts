@@ -30,6 +30,14 @@ export default class Vec2 extends Array<number> {
     return new Vec2(b.x - a.x, b.y - a.y);
   }
 
+  static multiply(a: Vec2, b: Vec2) {
+    return new Vec2(a.x * b.x, a.y * b.y);
+  }
+
+  static multiplyScalar(a: Vec2, number: number) {
+    return new Vec2(a.x * number, a.y * number);
+  }
+
   static dot(a: Vec2, b: Vec2) {
     return a.x * b.x + a.y * b.y;
   }
@@ -47,30 +55,22 @@ export default class Vec2 extends Array<number> {
   }
 
   add(value: Vec2) {
-    this.x += value.x;
-    this.y += value.y;
-    return this;
+    return Vec2.add(this, value);
   }
 
-  subtract(value: Vec2) {
-    this.x -= value.x;
-    this.y -= value.y;
-    return this;
+  sub(value: Vec2) {
+    return Vec2.sub(this, value);
   }
 
   multiply(x: number, y: number): this;
   multiply(vector: Vec2): this;
   multiply(...args: unknown[]) {
-    const [x, y] = args.length === 2 ? (args as number[]) : (args[0] as Vec2);
-    this.x *= x;
-    this.y *= y;
-    return this;
+    const value = args.length === 2 ? new Vec2(args[0] as number, args[1] as number) : (args[0] as Vec2);
+    return Vec2.multiply(this, value);
   }
 
   multiplyScalar(value: number) {
-    this.x *= value;
-    this.y *= value;
-    return this;
+    return Vec2.multiplyScalar(this, value);
   }
 
   clone() {

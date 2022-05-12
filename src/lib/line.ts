@@ -29,7 +29,7 @@ export default class Line extends Array<Vec2> {
   }
 
   distance() {
-    return this.relative().normalise();
+    return this.relative().magnitude();
   }
 
   clone() {

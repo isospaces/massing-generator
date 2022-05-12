@@ -32,16 +32,20 @@ export const setupCanvas = (canvas: HTMLCanvasElement) => {
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
 
+  // line style
+  ctx.lineCap = "round";
+  ctx.lineWidth = 2;
+
   return { ctx, center, width, height };
 };
 
 export const generatePolygon = (minPoints: number, maxPoints: number, minRadius: number, maxRadius: number) => {
-  const pointCount = Random.range(5, 10);
+  const pointCount = Random.range(minPoints, maxPoints);
   const points: Vec2[] = [];
   const step = PI2 / pointCount;
   for (let i = 0; i < pointCount; i++) {
     const angle = step * i;
-    const distance = Random.range(0.2, 0.4);
+    const distance = Random.range(minRadius, maxRadius);
     const point = new Vec2(cos(angle), sin(angle)).multiplyScalar(distance);
     points.push(point);
   }

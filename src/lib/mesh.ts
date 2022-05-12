@@ -3,15 +3,19 @@ import Vec2 from "./vec2";
 import { intersectsPolygon } from "./collision";
 
 export class Mesh {
-  public shape: Shape;
   public color: string = "#888";
+  private _shape: Shape;
   private _position = new Vec2(0, 0);
   private _rotation = 0;
   private _shapeWorld: Vec2[];
 
   constructor(shape: Shape) {
-    this.shape = shape;
+    this._shape = shape;
     this._shapeWorld = shape.points;
+  }
+
+  public get shape() {
+    return this._shape;
   }
 
   public get shapeWorld() {
@@ -26,6 +30,10 @@ export class Mesh {
     return this._rotation;
   }
 
+  public set shape(value) {
+    this.setShape(value);
+  }
+
   public set position(value) {
     this.setPosition(value);
   }
@@ -34,8 +42,10 @@ export class Mesh {
     this.setRotation(value);
   }
 
-  protected updateWorldPosition() {
-    this._shapeWorld = this.shape.points.map((p) => Vec2.add(p, this.position));
+  public setShape(value: Shape) {
+    this._shape = value;
+    this.updateWorldPosition();
+    return this;
   }
 
   public setPosition(value: Vec2) {
@@ -79,5 +89,34 @@ export class Mesh {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+
+    // draw vertices and origin
+    ctx.fillStyle = "#000";
+    for (const { x, y } of this._shapeWorld) {
+      ctx.beginPath();
+      ctx.ellipse(x, y, 3, 3, 0, 0, 360);
+      ctx.fill();
+    }
+
+    const [ox, oy] = this._position;
+
+    ctx.beginPath();
+    ctx.ellipse(ox, oy, 5, 5, 0, 0, 360);
+    ctx.fill();
+  }
+
+  protected updateWorldPosition() {
+    this._shapeWorld = this.shape.points.map((p) => {
+      if (this.rotation !== 0) {
+        const [x, y] = p;
+        const radians = this.rotation;
+        const cos = Math.cos(radians);
+        const sin = Math.sin(radians);
+        const point = new Vec2(cos * x + sin * y, cos * y - sin * x);
+        return point.add(this.position);
+      }
+
+      return p.add(this.position);
+    });
   }
 }
