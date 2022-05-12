@@ -4,7 +4,6 @@ import { Mesh } from "./lib/mesh";
 import { shapeToLines } from "./lib/collision";
 import Shape from "./lib/shape";
 import { generatePolygon, generateUnitPlacement } from "./lib/generation";
-import "./App.css";
 import Vec2 from "./lib/vec2";
 
 const DUMMY_CANVAS = document.createElement("canvas");
@@ -83,7 +82,7 @@ function App() {
 
   return (
     <div>
-      <canvas ref={canvasRef} />;
+      <canvas ref={canvasRef} className="w-full" />
       <Controls
         onCountChange={(e) => setUnitCount(parseInt(e.target.value))}
         onSpacingChange={(e) => setSpacing(parseInt(e.target.value))}
@@ -99,7 +98,7 @@ interface ControlProps {
 
 const Controls = ({ onCountChange, onSpacingChange }: ControlProps) => {
   return (
-    <div className="controls">
+    <div className=" absolute bottom-4 left-4">
       <div>
         <div>
           <p>Unit Count</p>
