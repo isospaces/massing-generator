@@ -7,13 +7,11 @@ export default class Shape {
     this.points = points;
   }
 
-  multiply(value: Vec2) {
-    this.points.forEach((p) => p.multiply(value));
-    return this;
-  }
-
-  multiplyScalar(value: number) {
-    this.points.forEach((p) => p.multiplyScalar(value));
+  scale(x: number, y: number): this;
+  scale(vector: Vec2): this;
+  scale(...args: unknown[]) {
+    const [x, y] = args.length === 2 ? (args as number[]) : (args[0] as Vec2);
+    this.points.forEach((p) => p.multiply(x, y));
     return this;
   }
 
