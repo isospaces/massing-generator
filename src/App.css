@@ -3,10 +3,20 @@ canvas {
   height: 100vh;
 }
 
+body {
+  overflow: hidden;
+}
+
 .controls {
   position: absolute;
-  width: 100%;
+  /* width: 100%; */
   bottom: 1rem;
+  left: 1rem;
   display: flex;
   justify-content: center;
+  align-items: center;
+}
+
+.slider p {
+  width: 100px
 }
