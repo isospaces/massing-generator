@@ -109,10 +109,6 @@ const Controls = ({ onCountChange, onSpacingChange }: ControlProps) => {
           <p>Spacing</p>
           <input type="range" min={0} max={60} step={5} defaultValue={0} onChange={onSpacingChange} />
         </div>
-        <div>
-          <p>Offset</p>
-          <input type="range" min={-1000} max={1000} step={10} defaultValue={0} />
-        </div>
       </div>
     </div>
   );
