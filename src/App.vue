@@ -20,6 +20,7 @@ const plot = new Mesh(new Shape([])).setColor("#9c9");
 const options = reactive({
   count: 10,
   spacing: 20,
+  enableGrid: true,
 });
 
 const render = () => {
@@ -31,7 +32,7 @@ const render = () => {
   ctx.fillStyle = "#eee";
   ctx.clearRect(0, 0, w, h);
 
-  drawGrid(ctx, w, h, offset);
+  if (options.enableGrid) drawGrid(ctx, w, h, offset);
   const [offX, offY] = offset;
 
   ctx.translate(offX, offY);
@@ -81,19 +82,12 @@ onMounted(() => {
   ctx.lineCap = "round";
   ctx.lineWidth = 1;
 
-  useDrag(el, (e) => {
-    console.log("test");
-  });
-
-  el.onmousemove = (e) => {
-    // e.preventDefault();
-    if (e.metaKey) {
-      offset = offset.add(new Vec2(e.movementX, e.movementY));
-      render();
-    }
-  };
-
   generate();
+  render();
+});
+
+useDrag(window as any, (e) => {
+  offset = offset.add(new Vec2(e.movementX, e.movementY));
   render();
 });
 </script>
@@ -101,6 +95,15 @@ onMounted(() => {
 <template>
   <canvas id="canvas" class="w-screen h-screen" />
   <div class="absolute bottom-6 left-6 flex flex-col gap-4">
+    <button
+      @click="
+        options.enableGrid = !options.enableGrid;
+        render();
+      "
+      class="bg-white rounded-md p-2 hover:cursor-pointer hover:bg-neutral-100"
+    >
+      Toggle Grid
+    </button>
     <div class="flex flex-col">
       <label for="count" class="uppercase text-xs mb-2">Count: {{ options.count }}</label>
       <input id="count" type="range" min="1" max="20" step="1" v-model="options.count" />
@@ -111,7 +114,7 @@ onMounted(() => {
     </div>
     <button
       @click="generate"
-      class="shadow-lg p-4 rounded-md bg-white hover:bg-orange-500 hover:text-white transition-colors"
+      class="shadow-lg p-4 rounded-md bg-orange-500 hover:bg-orange-600 text-white transition-colors hover:cursor-pointer font-bold text-lg"
     >
       Generate
     </button>
