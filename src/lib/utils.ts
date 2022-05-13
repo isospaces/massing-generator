@@ -46,3 +46,18 @@ export const sortByNormals = (lines: Line[]) => {
     .sort((a, b) => a.normal.y - b.normal.y)
     .map((data) => data.line);
 };
+
+export const drawGrid = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+  ctx.strokeStyle = "#333";
+
+  for (let x = 0; x <= w; x += 20) {
+    for (let y = 0; y <= h; y += 20) {
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+  }
+};

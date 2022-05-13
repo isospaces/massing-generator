@@ -1,78 +1,47 @@
 <script setup lang="ts">
-import { ref } from "./vue";
+import { onMounted, reactive, ref, watch } from "vue";
 import { setupCanvas, sortByNormals } from "./lib/utils";
 import { Mesh } from "./lib/mesh";
 import { shapeToLines } from "./lib/collision";
 import Shape from "./lib/shape";
 import { generatePolygon, generateUnitPlacement } from "./lib/generation";
-import Vec2 from "./lib/vec2";
+import Scene from "./components/Scene.vue";
 
-const canvas = ref();
-const { ctx, center, width, height, dpr } = setupCanvas(canvas);
-let unitCount = 10;
-let spacing = 20;
+const scene = ref<typeof Scene>();
 const plot = new Mesh(new Shape([])).setColor("#9c9");
-const units = new Array<Mesh>();
-const offset = new Vec2(0, 0);
+const options = reactive({
+  count: 10,
+  spacing: 20,
+});
+
+let entities: Mesh[] = [];
 
 const generate = () => {
-  const shape = generatePolygon(5, 8, 0.2, 0.4).scale(width, height);
-  plot.current.setShape(shape).setPosition(center);
+  const data = scene.value;
 
-  const lines = sortByNormals(shapeToLines(plot.current.shapeWorld));
-  units.current = generateUnitPlacement(lines, { count: unitCount, spacing });
-};
+  // const shape = generatePolygon(5, 8, 0.2, 0.4).scale(width, height);
+  // plot.setShape(shape).setPosition(center);
 
-const render = () => {
-  // clear
-  ctx.clearRect(0, 0, width, height);
+  // const lines = sortByNormals(shapeToLines(plot.shapeWorld));
+  // const units = generateUnitPlacement(lines, options);
 
-  // translate
-  const [offX, offY] = offset.current;
-  ctx.resetTransform();
-  ctx.translate(offX, offY);
-
-  // render
-  plot.current.render(ctx);
-  units.current.forEach((unit) => unit.render(ctx));
-};
-
-const bindkeys = () => {
-  const canvas = canvasRef.current;
-  let pointerdown = false;
-
-  const ondrag = (e: MouseEvent) => {
-    if (!pointerdown) return;
-
-    e.preventDefault();
-    const movement = new Vec2(e.movementX, e.movementY);
-    offset.current = offset.current.add(movement);
-    forceUpdate();
-  };
-
-  const onpointerdown = () => {
-    pointerdown = true;
-    canvas.style.cursor = "grab";
-  };
-
-  const onpointerup = () => {
-    pointerdown = false;
-    canvas.style.cursor = "auto";
-  };
-
-  canvas.addEventListener("mousemove", ondrag);
-  canvas.addEventListener("pointerdown", onpointerdown);
-  canvas.addEventListener("pointerup", onpointerup);
-
-  return () => {
-    canvas.removeEventListener("mousemove", ondrag);
-    canvas.removeEventListener("pointerdown", onpointerdown);
-    canvas.removeEventListener("pointerup", onpointerup);
-  };
+  // entities = [plot, ...units];
 };
 </script>
 
 <template>
-  <img alt="Vue logo" src="./assets/logo.png" />
-  <HelloWorld msg="Hello Vue 3 + TypeScript + Vite" />
+  <Scene ref="scene" :entities="entities" background-color="#eee" />
+  <div class="absolute bottom-4 left-4">
+    <button @click="generate" class="shadow-md p-4 rounded-md bg-white">Generate</button>
+  </div>
 </template>
+
+<style>
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: #ddd;
+}
+</style>
