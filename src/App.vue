@@ -100,7 +100,7 @@ onMounted(() => {
 
 <template>
   <canvas id="canvas" class="w-screen h-screen" />
-  <div class="absolute bottom-4 left-4 flex flex-col gap-4">
+  <div class="absolute bottom-6 left-6 flex flex-col gap-4">
     <div class="flex flex-col">
       <label for="count" class="uppercase text-xs mb-2">Count: {{ options.count }}</label>
       <input id="count" type="range" min="1" max="20" step="1" v-model="options.count" />
@@ -115,6 +115,14 @@ onMounted(() => {
     >
       Generate
     </button>
+  </div>
+  <div
+    class="absolute bottom-6 right-6 w-40 h-40 rounded-full border-black bg-[#ffffff66] flex justify-center items-center font-bold"
+  >
+    <p class="absolute top-3 text-blue-500">N</p>
+    <p class="absolute bottom-3 text-red-500">S</p>
+    <p class="absolute right-3 opacity-25">E</p>
+    <p class="absolute left-3 opacity-25">W</p>
   </div>
 </template>
 
