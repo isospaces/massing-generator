@@ -1,7 +1,7 @@
 import Shape from "./shape";
 import Vec2 from "./vec2";
-import Random from "./random";
 import Line from "./line";
+import { mod } from "./math";
 
 export namespace COLORS {
   export const WHITE = "#ffffff";
@@ -47,17 +47,17 @@ export const sortByNormals = (lines: Line[]) => {
     .map((data) => data.line);
 };
 
-export const drawGrid = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
-  ctx.strokeStyle = "#333";
-
-  for (let x = 0; x <= w; x += 20) {
-    for (let y = 0; y <= h; y += 20) {
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, h);
-      ctx.stroke();
-      ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
-      ctx.stroke();
-    }
+export const drawGrid = (ctx: CanvasRenderingContext2D, w: number, h: number, offset: Vec2) => {
+  ctx.strokeStyle = "#bbb";
+  const step = w / 40;
+  ctx.beginPath();
+  for (let p = 0; p <= w; p += step) {
+    const x = mod(p + offset.x, w);
+    const y = mod(p + offset.y, w);
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
   }
+  ctx.stroke();
 };

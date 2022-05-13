@@ -1,38 +1,120 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from "vue";
-import { setupCanvas, sortByNormals } from "./lib/utils";
-import { Mesh } from "./lib/mesh";
+import { transform } from "@vue/compiler-core";
+import { defineComponent, onMounted, reactive, ref, watch, watchEffect } from "vue";
+import useDrag from "./composables/useDrag";
 import { shapeToLines } from "./lib/collision";
-import Shape from "./lib/shape";
 import { generatePolygon, generateUnitPlacement } from "./lib/generation";
-import Scene from "./components/Scene.vue";
+import { mod } from "./lib/math";
+import { Mesh } from "./lib/mesh";
+import Shape from "./lib/shape";
+import { drawGrid, sortByNormals } from "./lib/utils";
+import Vec2 from "./lib/vec2";
 
-const scene = ref<typeof Scene>();
+let ctx: CanvasRenderingContext2D;
+let offset = new Vec2(0, 0);
+let dimensions = new Vec2(0, 0);
+let center = new Vec2(0, 0);
+
+let units: Mesh[] = [];
 const plot = new Mesh(new Shape([])).setColor("#9c9");
 const options = reactive({
   count: 10,
   spacing: 20,
 });
 
-let entities: Mesh[] = [];
+const render = () => {
+  if (!ctx) return;
+  console.time("render");
+  const { x: w, y: h } = dimensions;
+
+  ctx.resetTransform();
+  ctx.fillStyle = "#eee";
+  ctx.clearRect(0, 0, w, h);
+
+  drawGrid(ctx, w, h, offset);
+  const [offX, offY] = offset;
+
+  ctx.translate(offX, offY);
+
+  console.timeEnd("render");
+  plot.render(ctx);
+  units.forEach((e) => e.render(ctx));
+};
 
 const generate = () => {
-  const data = scene.value;
+  if (!ctx) return;
+  const { width, height } = ctx.canvas;
 
-  // const shape = generatePolygon(5, 8, 0.2, 0.4).scale(width, height);
-  // plot.setShape(shape).setPosition(center);
+  const shape = generatePolygon(5, 8, 0.2, 0.4).scale(width, height);
+  plot.setShape(shape).setPosition(center);
 
-  // const lines = sortByNormals(shapeToLines(plot.shapeWorld));
-  // const units = generateUnitPlacement(lines, options);
+  const lines = sortByNormals(shapeToLines(plot.shapeWorld));
+  units = generateUnitPlacement(lines, options);
 
-  // entities = [plot, ...units];
+  render();
 };
+
+onMounted(() => {
+  const el = document.getElementById("canvas") as HTMLCanvasElement;
+  if (!el) return;
+
+  ctx = el.getContext("2d")!;
+  console.log("initialising canvas: ", ctx);
+
+  // setup canvas size and dpr
+  const dpr = window.devicePixelRatio || 1;
+  const rect = el.getBoundingClientRect();
+  el.width = rect.width * dpr;
+  el.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+
+  // sizing
+  const { width, height } = el;
+  dimensions = new Vec2(width, height);
+  center = new Vec2(width, height).divideScalar(2);
+
+  // antialising
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+
+  // line style
+  ctx.lineCap = "round";
+  ctx.lineWidth = 1;
+
+  useDrag(el, (e) => {
+    console.log("test");
+  });
+
+  el.onmousemove = (e) => {
+    // e.preventDefault();
+    if (e.metaKey) {
+      offset = offset.add(new Vec2(e.movementX, e.movementY));
+      render();
+    }
+  };
+
+  generate();
+  render();
+});
 </script>
 
 <template>
-  <Scene ref="scene" :entities="entities" background-color="#eee" />
-  <div class="absolute bottom-4 left-4">
-    <button @click="generate" class="shadow-md p-4 rounded-md bg-white">Generate</button>
+  <canvas id="canvas" class="w-screen h-screen" />
+  <div class="absolute bottom-4 left-4 flex flex-col gap-4">
+    <div class="flex flex-col">
+      <label for="count" class="uppercase text-xs mb-2">Count: {{ options.count }}</label>
+      <input id="count" type="range" min="1" max="20" step="1" v-model="options.count" />
+    </div>
+    <div class="flex flex-col">
+      <label for="spacing" class="uppercase text-xs mb-2">Spacing: {{ options.spacing }}</label>
+      <input id="spacing" type="range" min="0" max="40" step="1" v-model="options.spacing" />
+    </div>
+    <button
+      @click="generate"
+      class="shadow-lg p-4 rounded-md bg-white hover:bg-orange-500 hover:text-white transition-colors"
+    >
+      Generate
+    </button>
   </div>
 </template>
 
@@ -42,6 +124,7 @@ const generate = () => {
 @tailwind utilities;
 
 body {
-  background: #ddd;
+  background: radial-gradient(#ddd, #ccc);
+  overflow: hidden;
 }
 </style>
