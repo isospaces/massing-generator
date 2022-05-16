@@ -7,6 +7,8 @@ export default class Renderer {
   public readonly center: Vec2;
   public size: Vec2;
   public pixelsPerMetre = 10;
+  public outlines = false;
+  public vertices = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.ctx = canvas.getContext("2d")!;
@@ -60,11 +62,13 @@ export default class Renderer {
     rest.forEach(({ x, y }) => this.ctx.lineTo(x, y));
     this.ctx.closePath();
     this.ctx.fill();
-    this.ctx.stroke();
+    if (this.outlines) this.ctx.stroke();
 
     // draw vertices and origin
-    this.ctx.fillStyle = "#000";
-    points.forEach((point) => this.renderVertex(point, 2));
+    if (this.vertices) {
+      this.ctx.fillStyle = "#000";
+      points.forEach((point) => this.renderVertex(point, 2));
+    }
     // this.renderVertex(mesh.position.multiplyScalar(pixelScale), 5);
   }
 

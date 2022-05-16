@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { transform } from "@vue/compiler-core";
-import { defineComponent, onMounted, reactive, ref, watch, watchEffect } from "vue";
+import { defineComponent, onMounted, onUnmounted, reactive, ref, watch, watchEffect } from "vue";
 import useDrag from "./composables/useDrag";
 import { shapeToLines } from "./lib/collision";
 import { generatePolygon, generateUnitPlacement } from "./lib/generation";
@@ -39,21 +39,33 @@ const generate = () => {
   render();
 };
 
+const onKeyDown = (e: KeyboardEvent) => {
+  if (e.code === "Space") generate();
+};
+
+const onMouseWheel = (e: any) => {
+  zoom = clamp(zoom + e.deltaY / 250, MIN_ZOOM, MAX_ZOOM);
+  render();
+};
+
 onMounted(() => {
   const canvasElement = document.getElementById("canvas") as HTMLCanvasElement;
   if (!canvasElement) return;
 
   renderer = new Renderer(canvasElement);
   generate();
+
+  // window.addEventListener("mousewheel", onMouseWheel);
+  window.addEventListener("keydown", onKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", onKeyDown);
+  // window.removeEventListener("mousewheel", onMouseWheel);
 });
 
 useDrag(window as any, (e) => {
   offset = offset.add(new Vec2(e.movementX, e.movementY));
-  render();
-});
-
-document.addEventListener("mousewheel", (e: any) => {
-  zoom = clamp(zoom + e.deltaY / 250, MIN_ZOOM, MAX_ZOOM);
   render();
 });
 </script>
