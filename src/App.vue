@@ -4,16 +4,19 @@ import { defineComponent, onMounted, reactive, ref, watch, watchEffect } from "v
 import useDrag from "./composables/useDrag";
 import { shapeToLines } from "./lib/collision";
 import { generatePolygon, generateUnitPlacement } from "./lib/generation";
-import { mod } from "./lib/math";
+import { clamp, mod } from "./lib/math";
 import { Mesh } from "./lib/mesh";
 import Renderer from "./lib/renderer";
 import Shape from "./lib/shape";
 import { sortByNormals } from "./lib/utils";
 import Vec2 from "./lib/vec2";
 
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 3;
+
 let renderer: Renderer;
 let offset = new Vec2(0, 0);
-
+let zoom = 1;
 let units: Mesh[] = [];
 const plot = new Mesh(new Shape([])).setColor("#9c9");
 const options = reactive({
@@ -22,7 +25,7 @@ const options = reactive({
   enableGrid: true,
 });
 
-const render = () => renderer.render([plot, ...units], offset);
+const render = () => renderer.render([plot, ...units], offset, zoom);
 
 const generate = () => {
   if (!renderer) return;
@@ -49,14 +52,10 @@ useDrag(window as any, (e) => {
   render();
 });
 
-window.onscroll = (e) => {
-  if (!renderer) return;
-  console.log("scrolling");
-
-  e.preventDefault();
-  renderer.pixelsPerMetre = window.scrollY;
+document.addEventListener("mousewheel", (e: any) => {
+  zoom = clamp(zoom + e.deltaY / 250, MIN_ZOOM, MAX_ZOOM);
   render();
-};
+});
 </script>
 
 <template>

@@ -31,23 +31,24 @@ export default class Renderer {
     this.ctx.lineWidth = 1;
   }
 
-  public render(scene: Mesh[], offset: Vec2) {
+  public render(scene: Mesh[], offset: Vec2, zoom = 1) {
     console.time("render");
-    const { x: w, y: h } = this.size;
+    const [w, h] = this.size;
+    const pixelScale = this.pixelsPerMetre * zoom;
 
     this.ctx.resetTransform();
     this.ctx.clearRect(0, 0, w, h);
 
     const translation = offset.add(this.center);
-    this.renderGrid(translation);
+    this.renderGrid(translation, pixelScale);
     this.ctx.translate(translation.x, translation.y);
 
+    scene.forEach((mesh) => this.renderMesh(mesh, pixelScale));
     console.timeEnd("render");
-    scene.forEach((mesh) => this.renderMesh(mesh));
   }
 
-  private renderMesh(mesh: Mesh) {
-    const points = mesh.shapeWorld.map((point) => point.multiplyScalar(this.pixelsPerMetre));
+  private renderMesh(mesh: Mesh, pixelScale: number) {
+    const points = mesh.shapeWorld.map((point) => point.multiplyScalar(pixelScale));
     const [first, ...rest] = points;
     // color
     this.ctx.strokeStyle = "#000";
@@ -64,7 +65,7 @@ export default class Renderer {
     // draw vertices and origin
     this.ctx.fillStyle = "#000";
     points.forEach((point) => this.renderVertex(point, 2));
-    this.renderVertex(mesh.position.multiplyScalar(this.pixelsPerMetre), 5);
+    // this.renderVertex(mesh.position.multiplyScalar(pixelScale), 5);
   }
 
   private renderVertex(position: Vec2, radius: number) {
@@ -74,13 +75,13 @@ export default class Renderer {
     this.ctx.fill();
   }
 
-  private renderGrid = (offset: Vec2) => {
+  private renderGrid = (offset: Vec2, pixelScale: number) => {
     const [dx, dy] = offset;
     const [w, h] = this.size;
 
     this.ctx.strokeStyle = "#bbb";
     this.ctx.beginPath();
-    for (let p = 0; p <= w; p += this.pixelsPerMetre) {
+    for (let p = 0; p <= w; p += pixelScale) {
       const x = mod(p + dx, w);
       const y = mod(p + dy, w);
       this.ctx.moveTo(x, 0);
