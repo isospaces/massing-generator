@@ -8,7 +8,7 @@ export default class Renderer {
   public size: Vec2;
   public pixelsPerMetre = 10;
   public vertices = false;
-  public outlines = false;
+  public outlines = true;
 
   constructor(canvas: HTMLCanvasElement) {
     this.ctx = canvas.getContext("2d")!;
@@ -69,6 +69,12 @@ export default class Renderer {
       this.ctx.fillStyle = "#000";
       points.forEach((point) => this.renderVertex(point, 2));
     }
+
+    const { x, y } = mesh.position.multiplyScalar(pixelScale);
+    this.ctx.fillStyle = "#000";
+    this.ctx.textAlign = "center";
+    this.ctx.font = "18px Arial";
+    this.ctx.fillText(mesh.name, x, y + 6);
     // this.renderVertex(mesh.position.multiplyScalar(pixelScale), 5);
   }
 

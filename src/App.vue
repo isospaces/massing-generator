@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, reactive, ref } from "vue";
 import useDrag from "./composables/useDrag";
-import { shapeToLines } from "./lib/collision";
 import { generatePolygon, generateUnitPlacement, UnitGenerationOptions } from "./lib/generation";
 import { clamp, mod } from "./lib/math";
 import { Mesh } from "./lib/mesh";
@@ -15,26 +14,29 @@ const MAX_ZOOM = 3;
 let renderer = ref<Renderer>();
 let offset = new Vec2(0, 0);
 let zoom = 1;
+
 let units: Mesh[] = [];
-const plot = new Mesh(new Shape([])).setColor("#9c9");
+let plot: Mesh;
+let communal: Mesh;
+
 const options: UnitGenerationOptions = reactive({
   count: 10,
   spacing: 0.5,
   padding: new Vec2(1, 1),
 });
 
-const render = () => renderer.value!.render([plot, ...units], offset, zoom);
+const render = () => renderer.value!.render([plot, communal, ...units], offset, zoom);
 
 const generate = () => {
   if (!renderer) return;
 
   console.time("generation");
-  const shape = generatePolygon(5, 8, 20, 40);
-  plot.setShape(shape);
-
+  const plotShape = generatePolygon(5, 8, 20, 40);
+  plot = new Mesh(plotShape).setColor("#9c9").setName("Plot");
+  communal = new Mesh(plotShape.clone().scale(0.5, 0.5)).setColor("#696").setName("Communal Space");
   units = generateUnitPlacement(plot, options);
-
   console.timeEnd("generation");
+
   render();
 };
 

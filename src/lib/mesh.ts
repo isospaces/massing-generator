@@ -3,6 +3,7 @@ import Vec2 from "./vec2";
 import { intersectsPolygon } from "./collision";
 
 export class Mesh {
+  public name = "Mesh";
   public color: string = "#888";
   private _shape: Shape;
   private _position = new Vec2(0, 0);
@@ -40,6 +41,11 @@ export class Mesh {
 
   public set rotation(value) {
     this.setRotation(value);
+  }
+
+  public setName(value: string) {
+    this.name = value;
+    return this;
   }
 
   public setShape(value: Shape) {

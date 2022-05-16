@@ -7,8 +7,8 @@ import Shape from "./shape";
 import { PI2, cos, sin } from "./math";
 import { shapeToLines } from "./collision";
 
-const UNIT_1 = createRect(new Vec2(9.15, 9.1));
-const UNIT_3 = createRect(new Vec2(3.175, 7.63));
+const TYPE_3 = createRect(new Vec2(9.15, 9.1));
+const TYPE_1 = createRect(new Vec2(3.175, 7.63));
 const PARKING_SPACE_SIZE = new Vec2(2.4, 4.8);
 
 export interface UnitGenerationOptions {
@@ -39,7 +39,7 @@ export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions
       if (distance > maxDistance - parallelOffset) break;
 
       const position = line.a.add(direction.multiplyScalar(distance).add(perpendicularOffset));
-      const newUnit = new Mesh(UNIT_1).setPosition(position).setRotation(-angle);
+      const newUnit = new Mesh(TYPE_3).setPosition(position).setRotation(-angle).setName("Type 3");
       const noBoundaryCollision = !newUnit.intersects(plot);
       const noUnitCollision = arr.every((unit) => !newUnit.intersects(unit));
       // arr.forEach((unit) => {
