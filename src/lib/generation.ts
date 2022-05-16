@@ -1,25 +1,25 @@
 import Line from "./line";
 import { Mesh } from "./mesh";
-import { createRect } from "./utils";
+import { createRect, sortByNormals } from "./utils";
 import Vec2 from "./vec2";
 import Random from "./random";
 import Shape from "./shape";
 import { PI2, cos, sin } from "./math";
+import { shapeToLines } from "./collision";
 
 const UNIT_1 = createRect(new Vec2(9.15, 9.1));
 const UNIT_3 = createRect(new Vec2(3.175, 7.63));
+const PARKING_SPACE_SIZE = new Vec2(2.4, 4.8);
 
 export interface UnitGenerationOptions {
   count: number;
   spacing?: number;
 }
 
-export const generateUnitPlacement = (lines: Line[], options: UnitGenerationOptions) => {
+export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions) => {
+  const lines = sortByNormals(shapeToLines(plot.shapeWorld));
   const { count, spacing } = { ...{ spacing: 0 }, ...options };
-
-  console.log(count, spacing);
-
-  const arr = [];
+  const arr: Mesh[] = [];
 
   const dimensions = new Vec2(9.15, 9.1);
   const padding = new Vec2(1, 1);
@@ -39,7 +39,19 @@ export const generateUnitPlacement = (lines: Line[], options: UnitGenerationOpti
       if (distance > maxDistance - parallelOffset) break;
 
       const position = line.a.add(direction.multiplyScalar(distance).add(perpendicularOffset));
-      arr.push(new Mesh(UNIT_1).setPosition(position).setRotation(-angle));
+      const newUnit = new Mesh(UNIT_1).setPosition(position).setRotation(-angle);
+      if (newUnit.intersects(plot)) {
+        newUnit.color = "#f00";
+      }
+      arr.forEach((unit) => {
+        const intersecting = newUnit.intersects(unit);
+        if (intersecting) {
+          unit.color = "#f00";
+          newUnit.color = "#f00";
+        }
+      });
+      arr.push(newUnit);
+
       remainingUnits--;
     }
 
@@ -65,4 +77,8 @@ export const generatePolygon = (minPoints: number, maxPoints: number, minRadius:
   }
 
   return new Shape(points);
+};
+
+export const generateParking = (bedCount: number) => {
+  return bedCount;
 };

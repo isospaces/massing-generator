@@ -32,8 +32,7 @@ const generate = () => {
   const shape = generatePolygon(5, 8, 20, 40);
   plot.setShape(shape);
 
-  const lines = sortByNormals(shapeToLines(plot.shapeWorld));
-  units = generateUnitPlacement(lines, options);
+  units = generateUnitPlacement(plot, options);
 
   console.timeEnd("generation");
   render();
@@ -87,7 +86,7 @@ useDrag("canvas", (e) => {
     </div>
     <div class="flex flex-col">
       <label for="spacing" class="uppercase text-xs mb-2">Spacing: {{ options.spacing }}</label>
-      <input id="spacing" type="range" min="0" max="40" step="1" v-model.number="options.spacing" @input="generate" />
+      <input id="spacing" type="range" min="0" max="10" step=".5" v-model.number="options.spacing" @input="generate" />
     </div>
     <button
       @click="generate"
