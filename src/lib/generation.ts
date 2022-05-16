@@ -13,16 +13,16 @@ const PARKING_SPACE_SIZE = new Vec2(2.4, 4.8);
 
 export interface UnitGenerationOptions {
   count: number;
-  spacing?: number;
+  spacing: number;
+  padding: Vec2;
 }
 
 export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions) => {
   const lines = sortByNormals(shapeToLines(plot.shapeWorld));
-  const { count, spacing } = { ...{ spacing: 0 }, ...options };
+  const { count, spacing, padding } = options;
   const arr: Mesh[] = [];
 
   const dimensions = new Vec2(9.15, 9.1);
-  const padding = new Vec2(1, 1);
 
   let remainingUnits = count;
   for (const line of lines) {
@@ -50,9 +50,10 @@ export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions
       //   }
       // });
 
-      if (noBoundaryCollision && noUnitCollision) arr.push(newUnit);
-
-      remainingUnits--;
+      if (noBoundaryCollision && noUnitCollision) {
+        arr.push(newUnit);
+        remainingUnits--;
+      }
     }
 
     if (remainingUnits === 0) return arr;

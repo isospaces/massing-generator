@@ -73,6 +73,20 @@ export class Mesh {
     return units.every((u) => intersectsPolygon(this._shapeWorld, u.shapeWorld));
   }
 
+  public get area() {
+    let a = 0; // Accumulates area
+    const points = this.shapeWorld;
+    let j = points.length - 1;
+
+    for (let i = 0; i < points.length; i++) {
+      const prev = points[j];
+      const current = points[i];
+      a += (prev.x + current.x) * (prev.y - current.y);
+      j = i;
+    }
+    return a / 2;
+  }
+
   protected updateWorldPosition() {
     this._shapeWorld = this.shape.points.map((p) => {
       let position = p.clone();

@@ -2,13 +2,12 @@
 import { onMounted, onUnmounted, reactive, ref } from "vue";
 import useDrag from "./composables/useDrag";
 import { shapeToLines } from "./lib/collision";
-import { generatePolygon, generateUnitPlacement } from "./lib/generation";
+import { generatePolygon, generateUnitPlacement, UnitGenerationOptions } from "./lib/generation";
 import { clamp, mod } from "./lib/math";
 import { Mesh } from "./lib/mesh";
 import Renderer from "./lib/renderer";
 import Shape from "./lib/shape";
 import Vec2 from "./lib/vec2";
-import { sortByNormals } from "./lib/utils";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 3;
@@ -18,9 +17,10 @@ let offset = new Vec2(0, 0);
 let zoom = 1;
 let units: Mesh[] = [];
 const plot = new Mesh(new Shape([])).setColor("#9c9");
-const options = reactive({
+const options: UnitGenerationOptions = reactive({
   count: 10,
-  spacing: 20,
+  spacing: 0.5,
+  padding: new Vec2(1, 1),
 });
 
 const render = () => renderer.value!.render([plot, ...units], offset, zoom);
@@ -72,9 +72,14 @@ useDrag("canvas", (e) => {
 <template>
   <canvas id="canvas" class="w-screen h-screen" />
   <div class="absolute bottom-6 left-6 flex flex-col gap-4">
+    <div v-if="renderer" class="flex justify-between items-center gap-2">
+      <label>Padding</label>
+      <input class="w-10 rounded pl-1" type="number" v-model="options.padding.x" @change="generate" />
+      <input class="w-10 rounded pl-1" type="number" v-model="options.padding.y" @change="generate" />
+    </div>
     <div v-if="renderer" class="flex justify-between items-center">
       <label for="checkbox">Outlines</label>
-      <input type="checkbox" id="checkbox" v-model="renderer.outlines" @change="render" />
+      <input id="outlines" type="checkbox" v-model="renderer.outlines" @change="render" />
     </div>
     <div v-if="renderer" class="flex justify-between items-center">
       <label for="checkbox">Vertices</label>
@@ -111,7 +116,7 @@ useDrag("canvas", (e) => {
 @tailwind utilities;
 
 body {
-  background: radial-gradient(#ddd, #ccc);
+  background: radial-gradient(#eee, #ccc);
   overflow: hidden;
 }
 </style>
