@@ -6,14 +6,13 @@ import { shapeToLines } from "./lib/collision";
 import { generatePolygon, generateUnitPlacement } from "./lib/generation";
 import { mod } from "./lib/math";
 import { Mesh } from "./lib/mesh";
+import Renderer from "./lib/renderer";
 import Shape from "./lib/shape";
-import { drawGrid, sortByNormals } from "./lib/utils";
+import { sortByNormals } from "./lib/utils";
 import Vec2 from "./lib/vec2";
 
-let ctx: CanvasRenderingContext2D;
+let renderer: Renderer;
 let offset = new Vec2(0, 0);
-let dimensions = new Vec2(0, 0);
-let center = new Vec2(0, 0);
 
 let units: Mesh[] = [];
 const plot = new Mesh(new Shape([])).setColor("#9c9");
@@ -23,31 +22,13 @@ const options = reactive({
   enableGrid: true,
 });
 
-const render = () => {
-  if (!ctx) return;
-  console.time("render");
-  const { x: w, y: h } = dimensions;
-
-  ctx.resetTransform();
-  ctx.fillStyle = "#eee";
-  ctx.clearRect(0, 0, w, h);
-
-  if (options.enableGrid) drawGrid(ctx, w, h, offset);
-  const [offX, offY] = offset;
-
-  ctx.translate(offX, offY);
-
-  console.timeEnd("render");
-  plot.render(ctx);
-  units.forEach((e) => e.render(ctx));
-};
+const render = () => renderer.render([plot, ...units], offset);
 
 const generate = () => {
-  if (!ctx) return;
-  const { width, height } = ctx.canvas;
+  if (!renderer) return;
 
-  const shape = generatePolygon(5, 8, 0.2, 0.4).scale(width, height);
-  plot.setShape(shape).setPosition(center);
+  const shape = generatePolygon(5, 8, 20, 40);
+  plot.setShape(shape);
 
   const lines = sortByNormals(shapeToLines(plot.shapeWorld));
   units = generateUnitPlacement(lines, options);
@@ -56,40 +37,26 @@ const generate = () => {
 };
 
 onMounted(() => {
-  const el = document.getElementById("canvas") as HTMLCanvasElement;
-  if (!el) return;
+  const canvasElement = document.getElementById("canvas") as HTMLCanvasElement;
+  if (!canvasElement) return;
 
-  ctx = el.getContext("2d")!;
-  console.log("initialising canvas: ", ctx);
-
-  // setup canvas size and dpr
-  const dpr = window.devicePixelRatio || 1;
-  const rect = el.getBoundingClientRect();
-  el.width = rect.width * dpr;
-  el.height = rect.height * dpr;
-  ctx.scale(dpr, dpr);
-
-  // sizing
-  const { width, height } = el;
-  dimensions = new Vec2(width, height);
-  center = new Vec2(width, height).divideScalar(2);
-
-  // antialising
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-
-  // line style
-  ctx.lineCap = "round";
-  ctx.lineWidth = 1;
-
+  renderer = new Renderer(canvasElement);
   generate();
-  render();
 });
 
 useDrag(window as any, (e) => {
   offset = offset.add(new Vec2(e.movementX, e.movementY));
   render();
 });
+
+window.onscroll = (e) => {
+  if (!renderer) return;
+  console.log("scrolling");
+
+  e.preventDefault();
+  renderer.pixelsPerMetre = window.scrollY;
+  render();
+};
 </script>
 
 <template>

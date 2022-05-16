@@ -73,50 +73,18 @@ export class Mesh {
     return units.every((u) => intersectsPolygon(this._shapeWorld, u.shapeWorld));
   }
 
-  public render(ctx: CanvasRenderingContext2D) {
-    const [first, ...shape] = this._shapeWorld;
-
-    // color
-    ctx.strokeStyle = "#000";
-    ctx.fillStyle = this.color;
-
-    // path
-    ctx.beginPath();
-    ctx.moveTo(first.x, first.y);
-    for (const { x, y } of shape) {
-      ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // draw vertices and origin
-    ctx.fillStyle = "#000";
-    for (const { x, y } of this._shapeWorld) {
-      ctx.beginPath();
-      ctx.ellipse(x, y, 3, 3, 0, 0, 360);
-      ctx.fill();
-    }
-
-    const [ox, oy] = this._position;
-
-    ctx.beginPath();
-    ctx.ellipse(ox, oy, 5, 5, 0, 0, 360);
-    ctx.fill();
-  }
-
   protected updateWorldPosition() {
     this._shapeWorld = this.shape.points.map((p) => {
+      let position = p.clone();
       if (this.rotation !== 0) {
-        const [x, y] = p;
+        const [x, y] = position;
         const radians = this.rotation;
         const cos = Math.cos(radians);
         const sin = Math.sin(radians);
-        const point = new Vec2(cos * x + sin * y, cos * y - sin * x);
-        return point.add(this.position);
+        position = new Vec2(cos * x + sin * y, cos * y - sin * x);
       }
 
-      return p.add(this.position);
+      return position.add(this.position);
     });
   }
 }

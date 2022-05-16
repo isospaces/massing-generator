@@ -1,13 +1,13 @@
 import Line from "./line";
 import { Mesh } from "./mesh";
-import { SHAPES } from "./utils";
+import { createRect } from "./utils";
 import Vec2 from "./vec2";
 import Random from "./random";
 import Shape from "./shape";
 import { PI2, cos, sin } from "./math";
 
-const UNIT_1 = SHAPES.RECTANGLE.clone().scale(new Vec2(20, 60));
-const UNIT_3 = SHAPES.RECTANGLE.clone().scale(new Vec2(60, 60));
+const UNIT_1 = createRect(new Vec2(9.15, 9.1));
+const UNIT_3 = createRect(new Vec2(3.175, 7.63));
 
 export interface UnitGenerationOptions {
   count: number;
@@ -19,24 +19,24 @@ export const generateUnitPlacement = (lines: Line[], options: UnitGenerationOpti
 
   const arr = [];
 
-  const dimensions = new Vec2(40, 120);
-  const padding = new Vec2(20, 20);
+  const dimensions = new Vec2(9.15, 9.1);
+  const padding = new Vec2(1, 1);
 
   let remainingUnits = count;
   for (const line of lines) {
     const maxDistance = line.distance();
     const direction = line.relative().normalise();
     const perpendicular = new Vec2(-direction.y, direction.x);
-    const inset = perpendicular.multiplyScalar(dimensions.y / 2 + padding.y);
-    const angle = Math.atan(direction.y / direction.x);
-    const xpad = dimensions.x / 2 + padding.x;
+    const perpendicularOffset = perpendicular.multiplyScalar(dimensions.y / 2 + padding.y);
+    const parallelOffset = dimensions.x / 2 + padding.x;
     const distanceCoefficient = dimensions.x + spacing;
+    const angle = Math.atan(direction.y / direction.x);
 
     for (let i = 0; i < remainingUnits; i++) {
-      const distance = distanceCoefficient * i + xpad;
-      if (distance > maxDistance - xpad) break;
+      const distance = distanceCoefficient * i + parallelOffset;
+      if (distance > maxDistance - parallelOffset) break;
 
-      const position = line.a.add(direction.multiplyScalar(distance).add(inset));
+      const position = line.a.add(direction.multiplyScalar(distance).add(perpendicularOffset));
       arr.push(new Mesh(UNIT_1).setPosition(position).setRotation(-angle));
       remainingUnits--;
     }
