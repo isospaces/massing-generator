@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { transform } from "@vue/compiler-core";
-import { defineComponent, onMounted, onUnmounted, reactive, ref, watch, watchEffect } from "vue";
+import { onMounted, onUnmounted, reactive, ref } from "vue";
 import useDrag from "./composables/useDrag";
 import { shapeToLines } from "./lib/collision";
 import { generatePolygon, generateUnitPlacement } from "./lib/generation";
@@ -8,13 +7,13 @@ import { clamp, mod } from "./lib/math";
 import { Mesh } from "./lib/mesh";
 import Renderer from "./lib/renderer";
 import Shape from "./lib/shape";
-import { sortByNormals } from "./lib/utils";
 import Vec2 from "./lib/vec2";
+import { sortByNormals } from "./lib/utils";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 3;
 
-let renderer: Renderer;
+let renderer = ref<Renderer>();
 let offset = new Vec2(0, 0);
 let zoom = 1;
 let units: Mesh[] = [];
@@ -22,20 +21,21 @@ const plot = new Mesh(new Shape([])).setColor("#9c9");
 const options = reactive({
   count: 10,
   spacing: 20,
-  enableGrid: true,
 });
 
-const render = () => renderer.render([plot, ...units], offset, zoom);
+const render = () => renderer.value!.render([plot, ...units], offset, zoom);
 
 const generate = () => {
   if (!renderer) return;
 
+  console.time("generation");
   const shape = generatePolygon(5, 8, 20, 40);
   plot.setShape(shape);
 
   const lines = sortByNormals(shapeToLines(plot.shapeWorld));
   units = generateUnitPlacement(lines, options);
 
+  console.timeEnd("generation");
   render();
 };
 
@@ -52,7 +52,7 @@ onMounted(() => {
   const canvasElement = document.getElementById("canvas") as HTMLCanvasElement;
   if (!canvasElement) return;
 
-  renderer = new Renderer(canvasElement);
+  renderer.value = new Renderer(canvasElement);
   generate();
 
   // window.addEventListener("mousewheel", onMouseWheel);
@@ -64,7 +64,7 @@ onUnmounted(() => {
   // window.removeEventListener("mousewheel", onMouseWheel);
 });
 
-useDrag(window as any, (e) => {
+useDrag("canvas", (e) => {
   offset = offset.add(new Vec2(e.movementX, e.movementY));
   render();
 });
@@ -73,22 +73,21 @@ useDrag(window as any, (e) => {
 <template>
   <canvas id="canvas" class="w-screen h-screen" />
   <div class="absolute bottom-6 left-6 flex flex-col gap-4">
-    <button
-      @click="
-        options.enableGrid = !options.enableGrid;
-        render();
-      "
-      class="bg-white rounded-md p-2 hover:cursor-pointer hover:bg-neutral-100"
-    >
-      Toggle Grid
-    </button>
+    <div v-if="renderer" class="flex justify-between items-center">
+      <label for="checkbox">Outlines</label>
+      <input type="checkbox" id="checkbox" v-model="renderer.outlines" @change="render" />
+    </div>
+    <div v-if="renderer" class="flex justify-between items-center">
+      <label for="checkbox">Vertices</label>
+      <input type="checkbox" id="checkbox" v-model="renderer.vertices" @change="render" />
+    </div>
     <div class="flex flex-col">
       <label for="count" class="uppercase text-xs mb-2">Count: {{ options.count }}</label>
-      <input id="count" type="range" min="1" max="20" step="1" v-model="options.count" />
+      <input id="count" type="range" min="1" max="20" step="1" v-model.number="options.count" @input="generate" />
     </div>
     <div class="flex flex-col">
       <label for="spacing" class="uppercase text-xs mb-2">Spacing: {{ options.spacing }}</label>
-      <input id="spacing" type="range" min="0" max="40" step="1" v-model="options.spacing" />
+      <input id="spacing" type="range" min="0" max="40" step="1" v-model.number="options.spacing" @input="generate" />
     </div>
     <button
       @click="generate"

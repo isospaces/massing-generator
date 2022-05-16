@@ -17,6 +17,8 @@ export interface UnitGenerationOptions {
 export const generateUnitPlacement = (lines: Line[], options: UnitGenerationOptions) => {
   const { count, spacing } = { ...{ spacing: 0 }, ...options };
 
+  console.log(count, spacing);
+
   const arr = [];
 
   const dimensions = new Vec2(9.15, 9.1);

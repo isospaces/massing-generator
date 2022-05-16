@@ -7,8 +7,8 @@ export default class Renderer {
   public readonly center: Vec2;
   public size: Vec2;
   public pixelsPerMetre = 10;
-  public outlines = false;
   public vertices = false;
+  public outlines = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.ctx = canvas.getContext("2d")!;
