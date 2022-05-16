@@ -40,17 +40,17 @@ export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions
 
       const position = line.a.add(direction.multiplyScalar(distance).add(perpendicularOffset));
       const newUnit = new Mesh(UNIT_1).setPosition(position).setRotation(-angle);
-      if (newUnit.intersects(plot)) {
-        newUnit.color = "#f00";
-      }
-      arr.forEach((unit) => {
-        const intersecting = newUnit.intersects(unit);
-        if (intersecting) {
-          unit.color = "#f00";
-          newUnit.color = "#f00";
-        }
-      });
-      arr.push(newUnit);
+      const noBoundaryCollision = !newUnit.intersects(plot);
+      const noUnitCollision = arr.every((unit) => !newUnit.intersects(unit));
+      // arr.forEach((unit) => {
+      //   const intersecting = newUnit.intersects(unit);
+      //   if (intersecting) {
+      //     unit.color = "#f00";
+      //     newUnit.color = "#f00";
+      //   }
+      // });
+
+      if (noBoundaryCollision && noUnitCollision) arr.push(newUnit);
 
       remainingUnits--;
     }
