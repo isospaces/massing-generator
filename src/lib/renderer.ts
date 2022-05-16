@@ -2,13 +2,15 @@ import { mod } from "./math";
 import { Mesh } from "./mesh";
 import Vec2 from "./vec2";
 
+const PIXELS_PER_METRE = 10;
+
 export default class Renderer {
   public readonly ctx: CanvasRenderingContext2D;
   public readonly center: Vec2;
   public size: Vec2;
-  public pixelsPerMetre = 10;
-  public vertices = false;
   public outlines = true;
+  public annotations = true;
+  public vertices = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.ctx = canvas.getContext("2d")!;
@@ -36,7 +38,7 @@ export default class Renderer {
   public render(scene: Mesh[], offset: Vec2, zoom = 1) {
     console.time("render");
     const [w, h] = this.size;
-    const pixelScale = this.pixelsPerMetre * zoom;
+    const pixelScale = PIXELS_PER_METRE * zoom;
 
     this.ctx.resetTransform();
     this.ctx.clearRect(0, 0, w, h);
@@ -67,15 +69,16 @@ export default class Renderer {
     // draw vertices and origin
     if (this.vertices) {
       this.ctx.fillStyle = "#000";
-      points.forEach((point) => this.renderVertex(point, 2));
+      points.forEach((point) => this.renderVertex(point, 3));
     }
 
-    const { x, y } = mesh.position.multiplyScalar(pixelScale);
-    this.ctx.fillStyle = "#000";
-    this.ctx.textAlign = "center";
-    this.ctx.font = "18px Arial";
-    this.ctx.fillText(mesh.name, x, y + 6);
-    // this.renderVertex(mesh.position.multiplyScalar(pixelScale), 5);
+    if (this.annotations) {
+      const { x, y } = mesh.position.multiplyScalar(pixelScale);
+      this.ctx.fillStyle = "#000";
+      this.ctx.textAlign = "center";
+      this.ctx.font = "18px Arial";
+      this.ctx.fillText(mesh.name, x, y + 6);
+    }
   }
 
   private renderVertex(position: Vec2, radius: number) {

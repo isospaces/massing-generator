@@ -17,7 +17,7 @@ export interface UnitGenerationOptions {
   padding: Vec2;
 }
 
-export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions) => {
+export const generateUnitPlacement = (plot: Mesh, communal: Mesh, options: UnitGenerationOptions) => {
   const lines = sortByNormals(shapeToLines(plot.shapeWorld));
   const { count, spacing, padding } = options;
   const arr: Mesh[] = [];
@@ -40,15 +40,8 @@ export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions
 
       const position = line.a.add(direction.multiplyScalar(distance).add(perpendicularOffset));
       const newUnit = new Mesh(TYPE_3).setPosition(position).setRotation(-angle).setName("Type 3");
-      const noBoundaryCollision = !newUnit.intersects(plot);
+      const noBoundaryCollision = !newUnit.intersects(plot) && !newUnit.intersects(communal);
       const noUnitCollision = arr.every((unit) => !newUnit.intersects(unit));
-      // arr.forEach((unit) => {
-      //   const intersecting = newUnit.intersects(unit);
-      //   if (intersecting) {
-      //     unit.color = "#f00";
-      //     newUnit.color = "#f00";
-      //   }
-      // });
 
       if (noBoundaryCollision && noUnitCollision) {
         arr.push(newUnit);

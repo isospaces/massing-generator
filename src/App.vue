@@ -33,8 +33,8 @@ const generate = () => {
   console.time("generation");
   const plotShape = generatePolygon(5, 8, 20, 40);
   plot = new Mesh(plotShape).setColor("#9c9").setName("Plot");
-  communal = new Mesh(plotShape.clone().scale(0.5, 0.5)).setColor("#696").setName("Communal Space");
-  units = generateUnitPlacement(plot, options);
+  communal = new Mesh(plotShape.clone().scale(0.4, 0.4)).setColor("#696").setName("Communal Space");
+  units = generateUnitPlacement(plot, communal, options);
   console.timeEnd("generation");
 
   render();
@@ -73,11 +73,15 @@ useDrag("canvas", (e) => {
 
 <template>
   <canvas id="canvas" class="w-screen h-screen" />
-  <div class="absolute bottom-6 left-6 flex flex-col gap-4">
+  <div class="absolute bottom-6 left-6 flex flex-col gap-4 accent-orange-500 select-none font-semibold">
     <div v-if="renderer" class="flex justify-between items-center gap-2">
       <label>Padding</label>
       <input class="w-10 rounded pl-1" type="number" v-model="options.padding.x" @change="generate" />
       <input class="w-10 rounded pl-1" type="number" v-model="options.padding.y" @change="generate" />
+    </div>
+    <div v-if="renderer" class="flex justify-between items-center">
+      <label for="annotations">Annotations</label>
+      <input id="annotations" type="checkbox" v-model="renderer.annotations" @change="render" />
     </div>
     <div v-if="renderer" class="flex justify-between items-center">
       <label for="checkbox">Outlines</label>
