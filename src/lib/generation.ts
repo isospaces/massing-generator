@@ -1,6 +1,5 @@
-import Line from "./line";
 import { Mesh } from "./mesh";
-import { createRect, sortByNormals } from "./utils";
+import { createRect } from "./utils";
 import Vec2 from "./vec2";
 import Random from "./random";
 import { PI, cos, sin, mod, sqrt, acos, PI2 } from "./math";

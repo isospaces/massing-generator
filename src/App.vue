@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, reactive, ref } from "vue";
-import useDrag from "./composables/useDrag";
-import { generatePolygon, generateUnitPlacement, UnitGenerationOptions } from "./lib/generation";
+import { generateUnitPlacement, UnitGenerationOptions } from "./lib/generation";
 import { abs, clamp, mod, PI, PI2 } from "./lib/math";
 import { Mesh } from "./lib/mesh";
 import Renderer, { PIXELS_PER_METRE } from "./lib/renderer";
@@ -65,16 +64,14 @@ const onMouseWheel = (e: any) => {
 };
 
 const onPointerDown = (e: PointerEvent) => {
+  if (!renderer.value!.vertices) return;
+
   const position = new Vec2(e.clientX, e.clientY);
   console.log("mouse: ", position);
   plot.value.shapeWorld.forEach((p, i) => {
     const point = p.multiplyScalar(PIXELS_PER_METRE).add(renderer.value!.center);
     const distanceToPoint = position.sub(point).magnitude();
-    console.log(distanceToPoint);
-
-    if (distanceToPoint < 5) {
-      activePoint = i;
-    }
+    if (distanceToPoint < 5) activePoint = i;
   });
 
   render();
