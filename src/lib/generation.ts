@@ -46,7 +46,7 @@ export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions
   const arr: Mesh[] = [];
   const dimensions = new Vec2(9.15, 9.1);
   const parallelOffset = dimensions.x / 2 + padding.x;
-  const distanceCoefficient = dimensions.x + (spacing === 0 ? 0.01 : spacing);
+  const distanceCoefficient = dimensions.x + (spacing === 0 ? 0.05 : spacing);
 
   let remainingUnits = count;
   lines.forEach((line) => {
