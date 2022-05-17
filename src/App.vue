@@ -34,9 +34,9 @@ let communal: Mesh;
 let activePoint: number | undefined;
 
 const options: UnitGenerationOptions = reactive({
-  count: 10,
-  spacing: 0.5,
-  padding: new Vec2(1, 1),
+  count: 50,
+  spacing: 0,
+  padding: new Vec2(1, 6),
   angularThreshold: Math.PI / 16,
 });
 
@@ -191,6 +191,7 @@ onUnmounted(() => {
 body {
   background-image: url("bg2.png");
   background-position: center;
+  background-repeat: no-repeat;
   /* background: radial-gradient(#eee, #ccc); */
   overflow: hidden;
 }
