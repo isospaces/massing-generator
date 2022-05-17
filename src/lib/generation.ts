@@ -17,28 +17,24 @@ export interface UnitGenerationOptions {
   angularThreshold: number;
 }
 
+export const angleFromPoints = (a: Vec2, b: Vec2, c: Vec2) => {
+  const vecA = b.sub(a).normalise();
+  const vecB = c.sub(b).normalise();
+  return acos(vecA.dot(vecB) / (vecA.magnitude() * vecB.magnitude()));
+};
+
 export const simplifyPolygon = (polygon: Vec2[], angularThreshold: number) => {
   const simplified = new Array<Vec2>();
-  let i = 0; // index of next point (current + 1)
-  let j = polygon.length - 1; // index of previous point
-  for (let i = 1; i < polygon.length; i++) {
-    const prev = polygon[j];
-    const current = polygon[i - 1];
-    const next = polygon[i];
+  const getPoint = (value: number) => polygon[mod(value, polygon.length)];
+  for (let i = 0; i < polygon.length; i++) {
+    const prev = getPoint(i - 1);
+    const current = getPoint(i);
+    const next = getPoint(i + 1);
 
-    // directional vectors
-    const a = current.sub(prev).normalise();
-    const b = next.sub(current).normalise();
-
-    const angle = acos(a.dot(b) / (a.magnitude() * b.magnitude()));
-    // console.log(prev, current, next);
-    // console.log(a, b);
-    if (angle > angularThreshold) {
-      // console.log(angle);
+    if (angleFromPoints(prev, current, next) > angularThreshold) {
       simplified.push(current);
     }
-
-    j = i - 1;
+    console.log(`${i}/${polygon.length}`);
   }
   return simplified;
 };
