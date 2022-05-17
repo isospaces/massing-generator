@@ -24,19 +24,13 @@ export const angleFromPoints = (a: Vec2, b: Vec2, c: Vec2) => {
 };
 
 export const simplifyPolygon = (polygon: Vec2[], angularThreshold: number) => {
-  const simplified = new Array<Vec2>();
   const getPoint = (value: number) => polygon[mod(value, polygon.length)];
-  for (let i = 0; i < polygon.length; i++) {
+  return polygon.filter((_, i) => {
     const prev = getPoint(i - 1);
     const current = getPoint(i);
     const next = getPoint(i + 1);
-
-    if (angleFromPoints(prev, current, next) > angularThreshold) {
-      simplified.push(current);
-    }
-    console.log(`${i}/${polygon.length}`);
-  }
-  return simplified;
+    return angleFromPoints(prev, current, next) > angularThreshold;
+  });
 };
 
 export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions) => {
@@ -56,7 +50,7 @@ export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions
   const distanceCoefficient = dimensions.x + (spacing === 0 ? 0.01 : spacing);
 
   let remainingUnits = count;
-  for (const line of lines) {
+  lines.forEach((line) => {
     const maxDistance = line.distance();
     const direction = line.relative().normalise();
     const perpendicular = new Vec2(-direction.y, direction.x);
@@ -80,7 +74,7 @@ export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions
     }
 
     if (remainingUnits === 0) return arr;
-  }
+  });
 
   if (remainingUnits > 0) {
     console.warn(`${remainingUnits} units were unable to fit inside the plot`);
