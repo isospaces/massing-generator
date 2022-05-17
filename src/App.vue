@@ -137,6 +137,10 @@ onUnmounted(() => {
       <input id="outlines" type="checkbox" v-model="renderer.outlines" @change="render" />
     </div>
     <div v-if="renderer" class="flex justify-between items-center">
+      <label for="checkbox">Visible</label>
+      <input id="outlines" type="checkbox" v-model="renderer.visible" @change="render" />
+    </div>
+    <div v-if="renderer" class="flex justify-between items-center">
       <label for="checkbox">Vertices</label>
       <input type="checkbox" id="checkbox" v-model="renderer.vertices" @change="render" />
     </div>
@@ -146,7 +150,7 @@ onUnmounted(() => {
     </div>
     <div class="flex flex-col">
       <label for="spacing" class="uppercase text-xs mb-2">Spacing: {{ options.spacing }}</label>
-      <input id="spacing" type="range" min="0" max="10" step=".5" v-model.number="options.spacing" @input="generate" />
+      <input id="spacing" type="range" min="0" max="10" step="1" v-model.number="options.spacing" @input="generate" />
     </div>
     <div class="flex flex-col">
       <label for="angle" class="uppercase text-xs mb-2"

@@ -42,8 +42,7 @@ export const simplifyPolygon = (polygon: Vec2[], angularThreshold: number) => {
 export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions) => {
   const { count, spacing, padding, angularThreshold } = options;
   const polygon = simplifyPolygon(plot.shapeWorld, angularThreshold);
-  const lines = shapeToLines(polygon);
-  const sortedLines = lines
+  const lines = shapeToLines(polygon)
     .map((line) => ({
       line,
       normal: line.relative().normalise().perpendicular(),
@@ -53,15 +52,15 @@ export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions
 
   const arr: Mesh[] = [];
   const dimensions = new Vec2(9.15, 9.1);
+  const parallelOffset = dimensions.x / 2 + padding.x;
+  const distanceCoefficient = dimensions.x + (spacing === 0 ? 0.01 : spacing);
 
   let remainingUnits = count;
-  for (const line of sortedLines) {
+  for (const line of lines) {
     const maxDistance = line.distance();
     const direction = line.relative().normalise();
     const perpendicular = new Vec2(-direction.y, direction.x);
     const perpendicularOffset = perpendicular.multiplyScalar(dimensions.y / 2 + padding.y);
-    const parallelOffset = dimensions.x / 2 + padding.x;
-    const distanceCoefficient = dimensions.x + spacing;
     const angle = Math.atan(direction.y / direction.x);
 
     for (let i = 0; i < remainingUnits; i++) {

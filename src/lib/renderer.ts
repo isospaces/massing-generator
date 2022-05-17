@@ -12,6 +12,7 @@ export default class Renderer {
   public annotations = false;
   public vertices = false;
   public grid = false;
+  public visible = true;
 
   constructor(canvas: HTMLCanvasElement) {
     this.ctx = canvas.getContext("2d")!;
@@ -43,6 +44,7 @@ export default class Renderer {
 
     this.ctx.resetTransform();
     this.ctx.clearRect(0, 0, w, h);
+    if (!this.visible) return;
 
     const translation = offset.add(this.center);
     if (this.grid) this.renderGrid(translation, pixelScale);
