@@ -16,13 +16,43 @@ export interface UnitGenerationOptions {
   angularThreshold: number;
 }
 
-export const angleFromPoints = (a: Vec2, b: Vec2, c: Vec2) => {
-  const vecA = b.sub(a).normalise();
-  const vecB = c.sub(b).normalise();
-  return acos(vecA.dot(vecB) / (vecA.magnitude() * vecB.magnitude()));
+/** Returns the convex hull of a given polygon */
+export const giftwrap = (polygon: Vec2[]) => {
+  const points = [...polygon].sort((a, b) => b.x - a.x); // sort points by x coord
+  const hull = [];
+  const leftmost = points[0];
+
+  let pointOnHull = leftmost;
+  let i = 0;
+  let endpoint;
+
+  do {
+    hull[i] = pointOnHull;
+    endpoint = points[0];
+
+    for (let j = 0; j < points.length; j++) {
+      const Sj = points[j];
+      const Pi = hull[i];
+      const angle = angleFromPoints(Pi, endpoint, Sj);
+      endpoint = Sj;
+    }
+
+    i++;
+
+    pointOnHull = endpoint;
+  } while (endpoint.id !== hull[0].id && i < 15);
+  hull.push(points[0]);
+
+  return hull;
 };
 
-export const simplifyPolygon = (polygon: Vec2[], angularThreshold: number) => {
+export const angleFromPoints = (a: Vec2, b: Vec2, c: Vec2) => {
+  const dirA = b.sub(a).normalise();
+  const dirB = c.sub(b).normalise();
+  return acos(dirA.dot(dirB) / (dirA.magnitude() * dirB.magnitude()));
+};
+
+export const simplify = (polygon: Vec2[], angularThreshold: number) => {
   const getPoint = (value: number) => polygon[mod(value, polygon.length)];
   return polygon.filter((_, i) => {
     const prev = getPoint(i - 1);
@@ -34,7 +64,10 @@ export const simplifyPolygon = (polygon: Vec2[], angularThreshold: number) => {
 
 export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions) => {
   const { count, spacing, padding, angularThreshold } = options;
-  const polygon = simplifyPolygon(plot.shapeWorld, angularThreshold);
+  const hull = giftwrap(plot.shapeWorld);
+  console.log(hull);
+
+  const polygon = simplify(plot.shapeWorld, angularThreshold);
   const lines = shapeToLines(polygon)
     .map((line) => ({
       line,
