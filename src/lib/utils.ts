@@ -1,4 +1,3 @@
-import Shape from "./shape";
 import Vec2 from "./vec2";
 import Line from "./line";
 
@@ -10,15 +9,11 @@ export namespace COLORS {
 }
 
 export const createRect = (size: Vec2) => {
-  return new Shape([new Vec2(-0.5, -0.5), new Vec2(-0.5, 0.5), new Vec2(0.5, 0.5), new Vec2(0.5, -0.5)]).scale(size);
+  return [new Vec2(-0.5, -0.5), new Vec2(-0.5, 0.5), new Vec2(0.5, 0.5), new Vec2(0.5, -0.5)].map((p) =>
+    p.multiply(size)
+  );
 };
 
 export const sortByNormals = (lines: Line[]) => {
-  return lines
-    .map((line) => ({
-      line,
-      normal: line.relative().normalise().perpendicular(),
-    }))
-    .sort((a, b) => a.normal.y - b.normal.y)
-    .map((data) => data.line);
+  return lines;
 };

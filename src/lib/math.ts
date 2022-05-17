@@ -1,5 +1,6 @@
-export const PI2 = Math.PI * 2;
-export const { sin, cos, atan, min, max } = Math;
+export const { sin, cos, acos, atan, min, max, abs, PI, sqrt } = Math;
+
+export const PI2 = PI * 2;
 
 export const mod = (v: number, n: number) => {
   return ((v % n) + n) % n;

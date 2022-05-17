@@ -1,18 +1,18 @@
-import Shape from "./shape";
 import Vec2 from "./vec2";
 import { intersectsPolygon } from "./collision";
 
 export class Mesh {
   public name = "Mesh";
   public color: string = "#888";
-  private _shape: Shape;
+  private _shape: Vec2[];
   private _position = new Vec2(0, 0);
   private _rotation = 0;
-  private _shapeWorld: Vec2[];
+  private _shapeWorld: Vec2[] = [];
 
-  constructor(shape: Shape) {
+  constructor(shape: Vec2[]) {
     this._shape = shape;
-    this._shapeWorld = shape.points;
+    this._shapeWorld = shape;
+    this.updateWorldPosition();
   }
 
   public get shape() {
@@ -43,12 +43,18 @@ export class Mesh {
     this.setRotation(value);
   }
 
+  public translatePoint(index: number, value: Vec2) {
+    this._shape[index] = this._shape[index].add(value);
+    this.updateWorldPosition();
+    return this;
+  }
+
   public setName(value: string) {
     this.name = value;
     return this;
   }
 
-  public setShape(value: Shape) {
+  public setShape(value: Vec2[]) {
     this._shape = value;
     this.updateWorldPosition();
     return this;
@@ -94,7 +100,7 @@ export class Mesh {
   }
 
   protected updateWorldPosition() {
-    this._shapeWorld = this.shape.points.map((p) => {
+    this._shapeWorld = this.shape.map((p) => {
       let position = p.clone();
       if (this.rotation !== 0) {
         const [x, y] = position;

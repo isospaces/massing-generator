@@ -2,15 +2,16 @@ import { mod } from "./math";
 import { Mesh } from "./mesh";
 import Vec2 from "./vec2";
 
-const PIXELS_PER_METRE = 10;
+export const PIXELS_PER_METRE = 4;
 
 export default class Renderer {
   public readonly ctx: CanvasRenderingContext2D;
   public readonly center: Vec2;
   public size: Vec2;
   public outlines = true;
-  public annotations = true;
+  public annotations = false;
   public vertices = false;
+  public grid = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.ctx = canvas.getContext("2d")!;
@@ -44,7 +45,7 @@ export default class Renderer {
     this.ctx.clearRect(0, 0, w, h);
 
     const translation = offset.add(this.center);
-    this.renderGrid(translation, pixelScale);
+    if (this.grid) this.renderGrid(translation, pixelScale);
     this.ctx.translate(translation.x, translation.y);
 
     scene.forEach((mesh) => this.renderMesh(mesh, pixelScale));
@@ -55,7 +56,7 @@ export default class Renderer {
     const points = mesh.shapeWorld.map((point) => point.multiplyScalar(pixelScale));
     const [first, ...rest] = points;
     // color
-    this.ctx.strokeStyle = "#000";
+    this.ctx.strokeStyle = "#666";
     this.ctx.fillStyle = mesh.color;
 
     // path
@@ -69,7 +70,7 @@ export default class Renderer {
     // draw vertices and origin
     if (this.vertices) {
       this.ctx.fillStyle = "#000";
-      points.forEach((point) => this.renderVertex(point, 3));
+      points.forEach((point) => this.renderVertex(point, 2));
     }
 
     if (this.annotations) {

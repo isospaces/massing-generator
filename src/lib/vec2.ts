@@ -42,6 +42,10 @@ export default class Vec2 extends Array<number> {
     return a.x * b.x + a.y * b.y;
   }
 
+  dot(value: Vec2) {
+    return Vec2.dot(this, value);
+  }
+
   normalise() {
     return this.divideScalar(this.magnitude() || 1);
   }
