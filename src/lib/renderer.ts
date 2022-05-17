@@ -77,7 +77,7 @@ export default class Renderer {
       const { x, y } = mesh.position.multiplyScalar(pixelScale);
       this.ctx.fillStyle = "#000";
       this.ctx.textAlign = "center";
-      this.ctx.font = "18px Arial";
+      this.ctx.font = "10px Arial";
       this.ctx.fillText(mesh.name, x, y + 6);
     }
   }
