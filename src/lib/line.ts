@@ -25,7 +25,7 @@ export default class Line extends Array<Vec2> {
   }
 
   relative() {
-    return Vec2.sub(this.a, this.b);
+    return Vec2.sub(this.b, this.a);
   }
 
   distance() {

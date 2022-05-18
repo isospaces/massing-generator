@@ -27,7 +27,7 @@ export default class Vec2 extends Array<number> {
   }
 
   static sub(a: Vec2, b: Vec2) {
-    return new Vec2(b.x - a.x, b.y - a.y);
+    return new Vec2(a.x - b.x, a.y - b.y);
   }
 
   static multiply(a: Vec2, b: Vec2) {
