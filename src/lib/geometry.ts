@@ -13,7 +13,7 @@ export const giftwrap = (polygon: Vec2[]) => {
   for (const p of points) if (p.x < tmp.x) tmp = p; // Find leftmost point
   hull[0] = tmp;
 
-  let ult: Vec2, penult: Vec2, newEnd: Vec2;
+  let ult: Vec2, penult: Vec2, newEnd!: Vec2;
   let minAngle = Math.PI;
 
   ult = hull[0];
@@ -97,25 +97,25 @@ export const ombb = (convexHull: Vec2[]) => {
   let bottomIndex = -1;
 
   for (let i = 0; i < count; i++) {
-    const pt = convexHull[i];
+    const [x, y] = convexHull[i];
 
-    if (pt.x < minX) {
-      minX = pt.x;
+    if (x < minX) {
+      minX = x;
       leftIndex = i;
     }
 
-    if (pt.x > maxX) {
-      maxX = pt.x;
+    if (x > maxX) {
+      maxX = x;
       rightIndex = i;
     }
 
-    if (pt.y < minY) {
-      minY = pt.y;
+    if (y < minY) {
+      minY = y;
       bottomIndex = i;
     }
 
-    if (pt.y > maxY) {
-      maxY = pt.y;
+    if (y > maxY) {
+      maxY = y;
       topIndex = i;
     }
   }
@@ -209,8 +209,6 @@ const calculateBoundingBox = (
   const width = tl.distance(tr);
   const height = tl.distance(bl);
   const area = width * height;
-
-  console.log(topDir, rightDir);
 
   return {
     box: [tl, bl, br, tr],
