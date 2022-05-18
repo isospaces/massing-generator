@@ -5,9 +5,9 @@ import { giftwrap } from "./lib/geometry";
 import { abs, clamp, mod, PI, PI2 } from "./lib/math";
 import { Mesh } from "./lib/mesh";
 import Renderer, { PIXELS_PER_METRE } from "./lib/renderer";
+import { throttle, time } from "./lib/utils";
 import Vec2 from "./lib/vec2";
 
-// // functional testing
 // type V2 = [number, number];
 // const vec2 = (x: number, y: number): V2 => [x, y];
 // const add = (a: V2, b: V2) => vec2(a[0] + b[0], a[1] + b[1]);
@@ -35,8 +35,8 @@ let renderer = ref<Renderer>();
 let offset = new Vec2(0, 0);
 let zoom = 1;
 
-let units: Mesh[] = [];
 const plot = ref<Mesh>(new Mesh(POINTS).setFillColor("#F7F0D5").setName("Plot"));
+let units: Mesh[] = [];
 let hull: Mesh;
 let activePoint: number | undefined;
 
@@ -49,20 +49,13 @@ const options: UnitGenerationOptions = reactive({
 
 const render = () => renderer.value!.render([plot.value as Mesh, hull, ...units], offset, zoom);
 
-const generate = () => {
-  if (!renderer) return;
-
-  console.time("generation");
-  // const plotShape = generatePolygon(5, 8, 20, 40);
-  // plot = new Mesh(plotShape).setColor("#F7F0D5").setName("Plot");
-  // communal = new Mesh(plotShape.clone().scale(0.4, 0.4)).setColor("#E9F4E8").setName("Communal Space");
-  units = generateUnitPlacement(plot.value as Mesh, options);
-
-  hull = new Mesh(giftwrap(plot.value.shapeWorld)).setStrokeColor("#0FF").setFillColor("#00ffff11");
-  console.timeEnd("generation");
-
+const generate = throttle(() => {
+  time("generation", () => {
+    units = generateUnitPlacement(plot.value as Mesh, options);
+    hull = new Mesh(giftwrap(plot.value.shapeWorld)).setStrokeColor("#0FF").setFillColor("#00ffff11");
+  });
   render();
-};
+}, 100);
 
 const onKeyDown = (e: KeyboardEvent) => {
   if (e.code === "Space") generate();
@@ -122,11 +115,6 @@ onUnmounted(() => {
   window.removeEventListener("pointermove", onPointerMove);
   // window.removeEventListener("mousewheel", onMouseWheel);
 });
-
-// useDrag("canvas", (e) => {
-//   offset = offset.add(new Vec2(e.movementX, e.movementY));
-//   render();
-// });
 </script>
 
 <template>
