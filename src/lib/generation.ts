@@ -2,8 +2,8 @@ import { Mesh } from "./mesh";
 import { createRect } from "./utils";
 import Vec2 from "./vec2";
 import Random from "./random";
-import { PI, cos, sin, mod, sqrt, acos, PI2 } from "./math";
-import { shapeToLines } from "./collision";
+import { PI, cos, sin, mod, sqrt, acos, PI2, abs } from "./math";
+import { giftwrap, pointsToLines, simplify } from "./geometry";
 
 const TYPE_3 = createRect(new Vec2(9.15, 9.1));
 const TYPE_1 = createRect(new Vec2(3.175, 7.63));
@@ -16,59 +16,11 @@ export interface UnitGenerationOptions {
   angularThreshold: number;
 }
 
-/** Returns the convex hull of a given polygon */
-export const giftwrap = (polygon: Vec2[]) => {
-  const points = [...polygon].sort((a, b) => b.x - a.x); // sort points by x coord
-  const hull = [];
-  const leftmost = points[0];
-
-  let pointOnHull = leftmost;
-  let i = 0;
-  let endpoint;
-
-  do {
-    hull[i] = pointOnHull;
-    endpoint = points[0];
-
-    for (let j = 0; j < points.length; j++) {
-      const Sj = points[j];
-      const Pi = hull[i];
-      const angle = angleFromPoints(Pi, endpoint, Sj);
-      endpoint = Sj;
-    }
-
-    i++;
-
-    pointOnHull = endpoint;
-  } while (endpoint.id !== hull[0].id && i < 15);
-  hull.push(points[0]);
-
-  return hull;
-};
-
-export const angleFromPoints = (a: Vec2, b: Vec2, c: Vec2) => {
-  const dirA = b.sub(a).normalise();
-  const dirB = c.sub(b).normalise();
-  return acos(dirA.dot(dirB) / (dirA.magnitude() * dirB.magnitude()));
-};
-
-export const simplify = (polygon: Vec2[], angularThreshold: number) => {
-  const getPoint = (value: number) => polygon[mod(value, polygon.length)];
-  return polygon.filter((_, i) => {
-    const prev = getPoint(i - 1);
-    const current = getPoint(i);
-    const next = getPoint(i + 1);
-    return angleFromPoints(prev, current, next) > angularThreshold;
-  });
-};
-
 export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions) => {
   const { count, spacing, padding, angularThreshold } = options;
-  const hull = giftwrap(plot.shapeWorld);
-  console.log(hull);
 
-  const polygon = simplify(plot.shapeWorld, angularThreshold);
-  const lines = shapeToLines(polygon)
+  const simplifiedPolygon = simplify(plot.shapeWorld, angularThreshold);
+  const lines = pointsToLines(simplifiedPolygon)
     .map((line) => ({
       line,
       normal: line.relative().normalise().perpendicular(),
@@ -94,7 +46,11 @@ export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions
       if (distance > maxDistance - parallelOffset) break;
 
       const position = line.a.add(direction.multiplyScalar(distance).add(perpendicularOffset));
-      const newUnit = new Mesh(TYPE_3).setPosition(position).setRotation(-angle).setName("Type 3").setColor("#FADAB4");
+      const newUnit = new Mesh(TYPE_3)
+        .setPosition(position)
+        .setRotation(-angle)
+        .setName("Type 3")
+        .setFillColor("#FADAB4");
       // const newUnit = new Mesh(TYPE_3).setPosition(position).setName("Type 3").setColor("#FADAB4");
       const noBoundaryCollision = !newUnit.intersects(plot);
       const noUnitCollision = arr.every((unit) => !newUnit.intersects(unit));

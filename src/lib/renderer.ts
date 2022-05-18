@@ -58,15 +58,15 @@ export default class Renderer {
     const points = mesh.shapeWorld.map((point) => point.multiplyScalar(pixelScale));
     const [first, ...rest] = points;
     // color
-    this.ctx.strokeStyle = "#666";
-    this.ctx.fillStyle = mesh.color;
+    this.ctx.strokeStyle = mesh.strokeColor;
+    this.ctx.fillStyle = mesh.fillColor;
 
     // path
     this.ctx.beginPath();
     this.ctx.moveTo(first.x, first.y);
     rest.forEach(({ x, y }) => this.ctx.lineTo(x, y));
     this.ctx.closePath();
-    this.ctx.fill();
+    if (mesh.fill) this.ctx.fill();
     if (this.outlines) this.ctx.stroke();
 
     // draw vertices and origin

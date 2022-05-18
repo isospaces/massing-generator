@@ -3,7 +3,9 @@ import { intersectsPolygon } from "./collision";
 
 export class Mesh {
   public name = "Mesh";
-  public color: string = "#888";
+  public strokeColor = "#000";
+  public fillColor = "#888";
+  public fill = true;
   private _shape: Vec2[];
   private _position = new Vec2(0, 0);
   private _rotation = 0;
@@ -72,8 +74,13 @@ export class Mesh {
     return this;
   }
 
-  public setColor(value: string) {
-    this.color = value;
+  public setStrokeColor(value: string) {
+    this.strokeColor = value;
+    return this;
+  }
+
+  public setFillColor(value: string) {
+    this.fillColor = value;
     return this;
   }
 

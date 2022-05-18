@@ -1,10 +1,18 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, reactive, ref } from "vue";
 import { generateUnitPlacement, UnitGenerationOptions } from "./lib/generation";
+import { giftwrap } from "./lib/geometry";
 import { abs, clamp, mod, PI, PI2 } from "./lib/math";
 import { Mesh } from "./lib/mesh";
 import Renderer, { PIXELS_PER_METRE } from "./lib/renderer";
 import Vec2 from "./lib/vec2";
+
+// // functional testing
+// type V2 = [number, number];
+// const vec2 = (x: number, y: number): V2 => [x, y];
+// const add = (a: V2, b: V2) => vec2(a[0] + b[0], a[1] + b[1]);
+// const test = add(vec2(1, 2), vec2(1, 0));
+// console.log(test);
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 3;
@@ -28,8 +36,8 @@ let offset = new Vec2(0, 0);
 let zoom = 1;
 
 let units: Mesh[] = [];
-const plot = ref<Mesh>(new Mesh(POINTS).setColor("#F7F0D5").setName("Plot"));
-let communal: Mesh;
+const plot = ref<Mesh>(new Mesh(POINTS).setFillColor("#F7F0D5").setName("Plot"));
+let hull: Mesh;
 let activePoint: number | undefined;
 
 const options: UnitGenerationOptions = reactive({
@@ -39,7 +47,7 @@ const options: UnitGenerationOptions = reactive({
   angularThreshold: Math.PI / 16,
 });
 
-const render = () => renderer.value!.render([plot.value as Mesh, ...units], offset, zoom);
+const render = () => renderer.value!.render([plot.value as Mesh, hull, ...units], offset, zoom);
 
 const generate = () => {
   if (!renderer) return;
@@ -49,6 +57,8 @@ const generate = () => {
   // plot = new Mesh(plotShape).setColor("#F7F0D5").setName("Plot");
   // communal = new Mesh(plotShape.clone().scale(0.4, 0.4)).setColor("#E9F4E8").setName("Communal Space");
   units = generateUnitPlacement(plot.value as Mesh, options);
+
+  hull = new Mesh(giftwrap(plot.value.shapeWorld)).setStrokeColor("#0FF").setFillColor("#00ffff11");
   console.timeEnd("generation");
 
   render();
@@ -78,7 +88,10 @@ const onPointerDown = (e: PointerEvent) => {
 };
 
 const onPointerUp = (e: PointerEvent) => {
-  activePoint = undefined;
+  if (activePoint !== undefined) {
+    activePoint = undefined;
+    generate();
+  }
 };
 
 const onPointerMove = (e: PointerEvent) => {
