@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, reactive, ref } from "vue";
 import { generateUnitPlacement, UnitGenerationOptions } from "./lib/generation";
-import { giftwrap } from "./lib/geometry";
+import { giftwrap, ombb } from "./lib/geometry";
 import { abs, clamp, mod, PI, PI2 } from "./lib/math";
 import { Mesh } from "./lib/mesh";
 import Renderer, { PIXELS_PER_METRE } from "./lib/renderer";
@@ -52,7 +52,7 @@ const render = () => renderer.value!.render([plot.value as Mesh, hull, ...units]
 const generate = throttle(() => {
   time("generation", () => {
     units = generateUnitPlacement(plot.value as Mesh, options);
-    hull = new Mesh(giftwrap(plot.value.shapeWorld)).setStrokeColor("#0FF").setFillColor("#00ffff11");
+    hull = new Mesh(ombb(giftwrap(plot.value.shapeWorld))).setStrokeColor("#0FF").setFillColor("#00ffff11");
   });
   render();
 }, 100);
@@ -102,7 +102,6 @@ onMounted(() => {
   renderer.value = new Renderer(canvasElement);
   generate();
 
-  // window.addEventListener("mousewheel", onMouseWheel);
   window.addEventListener("keydown", onKeyDown);
   window.addEventListener("pointerdown", onPointerDown);
   window.addEventListener("pointerup", onPointerUp);
@@ -110,10 +109,10 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  window.removeEventListener("keydown", onKeyDown);
   window.removeEventListener("pointerdown", onPointerDown);
   window.removeEventListener("pointerup", onPointerUp);
   window.removeEventListener("pointermove", onPointerMove);
-  // window.removeEventListener("mousewheel", onMouseWheel);
 });
 </script>
 

@@ -58,6 +58,18 @@ export default class Vec2 extends Array<number> {
     return this.multiplyScalar(1 / value);
   }
 
+  distance(value: Vec2) {
+    return value.sub(this).magnitude();
+  }
+
+  negate() {
+    return new Vec2(-this.x, -this.y);
+  }
+
+  orthogonal() {
+    return new Vec2(this.y, -this.x);
+  }
+
   magnitude() {
     return Math.sqrt(this.x * this.x + this.y * this.y);
   }
