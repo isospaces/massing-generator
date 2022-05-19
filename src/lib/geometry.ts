@@ -186,7 +186,7 @@ export const ombb = (convexHull: Vec2[]) => {
     }
   }
 
-  return ombb;
+  return { points: ombb, area: bestArea };
 };
 
 const calculateBoundingBox = (

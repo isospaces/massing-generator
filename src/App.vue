@@ -52,7 +52,9 @@ const render = () => renderer.value!.render([plot.value as Mesh, hull, ...units]
 const generate = throttle(() => {
   time("generation", () => {
     units = generateUnitPlacement(plot.value as Mesh, options);
-    hull = new Mesh(ombb(giftwrap(plot.value.shapeWorld))).setStrokeColor("#0FF").setFillColor("#00ffff11");
+    const bbox = ombb(giftwrap(plot.value.shapeWorld));
+    hull = new Mesh(bbox.points).setStrokeColor("#0FF").setFillColor("#00ffff11");
+    hull.name = bbox.area + " m2";
   });
   render();
 }, 100);
