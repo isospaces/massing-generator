@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, reactive, ref } from "vue";
-import { generateUnitPlacement, UnitGenerationOptions } from "./lib/generation";
+import { generateUnits, UnitGenerationOptions } from "./lib/generation";
 import { giftwrap, ombb } from "./lib/geometry";
 import { abs, clamp, mod, PI, PI2 } from "./lib/math";
 import { Mesh } from "./lib/mesh";
@@ -51,7 +51,7 @@ const render = () => renderer.value!.render([plot.value as Mesh, hull, ...units]
 
 const generate = throttle(() => {
   time("generation", () => {
-    units = generateUnitPlacement(plot.value as Mesh, options);
+    units = generateUnits(plot.value as Mesh, options);
     const bbox = ombb(giftwrap(plot.value.shapeWorld));
     hull = new Mesh(bbox.points).setStrokeColor("#0FF").setFillColor("#00ffff11");
     hull.name = bbox.area + " m2";

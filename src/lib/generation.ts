@@ -3,7 +3,7 @@ import { createRect } from "./utils";
 import Vec2 from "./vec2";
 import Random from "./random";
 import { PI, cos, sin, mod, sqrt, acos, PI2, abs } from "./math";
-import { giftwrap, pointsToLines, simplify } from "./geometry";
+import { pointsToLines, simplify } from "./geometry";
 
 const TYPE_3 = createRect(new Vec2(9.15, 9.1));
 const TYPE_1 = createRect(new Vec2(3.175, 7.63));
@@ -16,7 +16,7 @@ export interface UnitGenerationOptions {
   angularThreshold: number;
 }
 
-export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions) => {
+export const generateUnits = (plot: Mesh, options: UnitGenerationOptions) => {
   const { count, spacing, padding, angularThreshold } = options;
 
   const simplifiedPolygon = simplify(plot.shapeWorld, angularThreshold);
@@ -34,7 +34,7 @@ export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions
   const distanceCoefficient = dimensions.x + (spacing === 0 ? 0.05 : spacing);
 
   let remainingUnits = count;
-  lines.forEach((line) => {
+  for (const line of lines) {
     const maxDistance = line.distance();
     const direction = line.relative().normalise();
     const perpendicular = new Vec2(-direction.y, direction.x);
@@ -62,7 +62,7 @@ export const generateUnitPlacement = (plot: Mesh, options: UnitGenerationOptions
     }
 
     if (remainingUnits === 0) return arr;
-  });
+  }
 
   if (remainingUnits > 0) {
     console.warn(`${remainingUnits} units were unable to fit inside the plot`);

@@ -1,3 +1,5 @@
+import { sqrt } from "./math";
+
 export default class Vec2 extends Array<number> {
   public get x() {
     return this[0];
@@ -101,3 +103,18 @@ export default class Vec2 extends Array<number> {
     return new Vec2(this.x, this.y);
   }
 }
+
+// pure functions
+const add = (a: Vec2, b: Vec2) => new Vec2(a.x + b.x, a.y + b.y);
+const sub = (a: Vec2, b: Vec2) => new Vec2(a.x - b.x, a.y - b.y);
+const multiply = (a: Vec2, b: Vec2) => new Vec2(a.x * b.x, a.y * b.y);
+const multiplyScalar = (a: Vec2, number: number) => new Vec2(a.x * number, a.y * number);
+const dot = (a: Vec2, b: Vec2) => a.x * b.x + a.y * b.y;
+const cross = (a: Vec2, b: Vec2) => a.x * b.x - a.y * b.y;
+const normalize = (v: Vec2) => divideScalar(v, v.magnitude() || 1);
+const divideScalar = (v: Vec2, value: number) => multiplyScalar(v, 1 / value);
+const distance = (a: Vec2, b: Vec2) => b.sub(a).magnitude();
+const negate = (v: Vec2) => new Vec2(-v.x, -v.y);
+const orthogonal = (v: Vec2) => new Vec2(v.y, -v.x);
+const magnitude = (v: Vec2) => sqrt(v.x * v.x + v.y * v.y);
+const perpendicular = (v: Vec2) => new Vec2(-v.y, v.x);
