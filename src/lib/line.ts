@@ -32,6 +32,10 @@ export default class Line extends Array<Vec2> {
     return this.relative().magnitude();
   }
 
+  toString(): string {
+    return `${this.a} - ${this.b}`;
+  }
+
   clone() {
     return new Line(this.a, this.b);
   }

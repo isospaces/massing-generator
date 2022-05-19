@@ -78,9 +78,22 @@ const intersectLines = (start0: Vec2, dir0: Vec2, start1: Vec2, dir1: Vec2) => {
   return new Vec2(start0.x + t * dir0.x, start0.y + t * dir0.y);
 };
 
+export interface OMBB {
+  points: [Vec2, Vec2, Vec2, Vec2];
+  width: number;
+  height: number;
+  area: number;
+  up: Vec2;
+  right: Vec2;
+  tl: Vec2;
+  bl: Vec2;
+  tr: Vec2;
+  br: Vec2;
+}
+
 /** Computes the Oriented Minimum Bounding Box (OMBB). */
-export const ombb = (convexHull: Vec2[]) => {
-  let ombb = new Array<Vec2>(4);
+export const computeOmbb = (convexHull: Vec2[]) => {
+  let ombb!: OMBB;
   let bestArea = Number.MAX_VALUE;
 
   const count = convexHull.length;
@@ -121,89 +134,88 @@ export const ombb = (convexHull: Vec2[]) => {
   }
 
   // initial caliper lines + directions
-  let leftDir = new Vec2(0, -1);
-  let rightDir = new Vec2(0, 1);
-  let topDir = new Vec2(-1, 0);
-  let bottomDir = new Vec2(1, 0);
+  let left = new Vec2(0, -1);
+  let right = new Vec2(0, 1);
+  let top = new Vec2(-1, 0);
+  let up = new Vec2(1, 0);
 
   // execute rotating caliper algorithm
   for (let i = 0; i < count; i++) {
     const phis = [
-      acos(leftDir.dot(edgeDirections[leftIndex])), // left
-      acos(rightDir.dot(edgeDirections[rightIndex])), // right
-      acos(topDir.dot(edgeDirections[topIndex])), // top
-      acos(bottomDir.dot(edgeDirections[bottomIndex])), // bottom
+      acos(left.dot(edgeDirections[leftIndex])), // left
+      acos(right.dot(edgeDirections[rightIndex])), // right
+      acos(top.dot(edgeDirections[topIndex])), // top
+      acos(up.dot(edgeDirections[bottomIndex])), // bottom
     ];
 
-    const smallestAngle = min(...phis);
-    const lineWithSmallestAngle = phis.indexOf(smallestAngle);
+    const indexOfSmallestAngle = phis.indexOf(min(...phis));
 
-    switch (lineWithSmallestAngle) {
+    switch (indexOfSmallestAngle) {
       case 0: // left
-        leftDir = edgeDirections[leftIndex].clone();
-        rightDir = leftDir.negate();
-        topDir = leftDir.orthogonal();
-        bottomDir = topDir.negate();
+        left = edgeDirections[leftIndex].clone();
+        right = left.negate();
+        top = left.orthogonal();
+        up = top.negate();
         leftIndex = (leftIndex + 1) % count;
         break;
       case 1: // right
-        rightDir = edgeDirections[rightIndex].clone();
-        leftDir = rightDir.negate();
-        topDir = leftDir.orthogonal();
-        bottomDir = topDir.negate();
+        right = edgeDirections[rightIndex].clone();
+        left = right.negate();
+        top = left.orthogonal();
+        up = top.negate();
         rightIndex = (rightIndex + 1) % count;
         break;
       case 2: // top
-        topDir = edgeDirections[topIndex].clone();
-        bottomDir = topDir.negate();
-        leftDir = bottomDir.orthogonal();
-        rightDir = leftDir.negate();
+        top = edgeDirections[topIndex].clone();
+        up = top.negate();
+        left = up.orthogonal();
+        right = left.negate();
         topIndex = (topIndex + 1) % count;
         break;
       case 3: // bottom
-        bottomDir = edgeDirections[bottomIndex].clone();
-        topDir = bottomDir.negate();
-        leftDir = bottomDir.orthogonal();
-        rightDir = leftDir.negate();
+        up = edgeDirections[bottomIndex].clone();
+        top = up.negate();
+        left = up.orthogonal();
+        right = left.negate();
         bottomIndex = (bottomIndex + 1) % count;
         break;
     }
 
-    const bbox = calculateBoundingBox(
+    const _ombb = createOmbb(
       convexHull[leftIndex],
-      leftDir,
+      left,
       convexHull[rightIndex],
-      rightDir,
+      right,
       convexHull[topIndex],
-      topDir,
+      top,
       convexHull[bottomIndex],
-      bottomDir
+      up
     );
 
-    if (bbox.area < bestArea) {
-      ombb = bbox.box;
-      bestArea = bbox.area;
+    if (_ombb.area < bestArea) {
+      ombb = _ombb;
+      bestArea = _ombb.area;
     }
   }
 
-  return { points: ombb, area: bestArea };
+  return ombb;
 };
 
-const calculateBoundingBox = (
+const createOmbb = (
   leftStart: Vec2,
-  leftDir: Vec2,
+  left: Vec2,
   rightStart: Vec2,
-  rightDir: Vec2,
+  right: Vec2,
   topStart: Vec2,
-  topDir: Vec2,
+  up: Vec2,
   bottomStart: Vec2,
-  bottomDir: Vec2
-) => {
+  down: Vec2
+): OMBB => {
   // corners
-  const tl = intersectLines(leftStart, leftDir, topStart, topDir);
-  const tr = intersectLines(rightStart, rightDir, topStart, topDir);
-  const bl = intersectLines(bottomStart, bottomDir, leftStart, leftDir);
-  const br = intersectLines(bottomStart, bottomDir, rightStart, rightDir);
+  const tl = intersectLines(leftStart, left, topStart, up);
+  const tr = intersectLines(rightStart, right, topStart, up);
+  const bl = intersectLines(bottomStart, down, leftStart, left);
+  const br = intersectLines(bottomStart, down, rightStart, right);
 
   // dimensions and area
   const width = tl.distance(tr);
@@ -211,7 +223,15 @@ const calculateBoundingBox = (
   const area = width * height;
 
   return {
-    box: [tl, bl, br, tr],
+    points: [tl, bl, br, tr],
+    width,
+    height,
     area,
+    up,
+    right,
+    tl,
+    bl,
+    br,
+    tr,
   };
 };

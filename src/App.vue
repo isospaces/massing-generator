@@ -1,18 +1,14 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, reactive, ref } from "vue";
+import { intersects, intersectsPolygon } from "./lib/collision";
 import { generateUnits, UnitGenerationOptions } from "./lib/generation";
-import { giftwrap, ombb } from "./lib/geometry";
+import { computeOmbb, giftwrap, pointsToLines } from "./lib/geometry";
+import Line from "./lib/line";
 import { abs, clamp, mod, PI, PI2 } from "./lib/math";
 import { Mesh } from "./lib/mesh";
 import Renderer, { PIXELS_PER_METRE } from "./lib/renderer";
 import { throttle, time } from "./lib/utils";
 import Vec2 from "./lib/vec2";
-
-// type V2 = [number, number];
-// const vec2 = (x: number, y: number): V2 => [x, y];
-// const add = (a: V2, b: V2) => vec2(a[0] + b[0], a[1] + b[1]);
-// const test = add(vec2(1, 2), vec2(1, 0));
-// console.log(test);
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 3;
@@ -51,10 +47,32 @@ const render = () => renderer.value!.render([plot.value as Mesh, hull, ...units]
 
 const generate = throttle(() => {
   time("generation", () => {
+    // plot points
+    const boundary = plot.value.shapeWorld;
+
+    // cellular division
+    const { points, width, height, tr, tl, bl, br } = computeOmbb(giftwrap(plot.value.shapeWorld));
+    const cellSize = 100; // metres
+    const cellCount = (width / cellSize) >> 0;
+
+    for (let i = 1; i < cellCount; i++) {
+      const t = (1 / cellCount) * i;
+      const a = tl.lerp(tr, t);
+      const b = bl.lerp(br, t);
+      const split = new Line(a, b);
+      console.log(split.toString(), t);
+      const lines = pointsToLines(boundary);
+      for (const line of lines) {
+        console.log(line.toString());
+        console.log(intersects(split, line));
+      }
+    }
+
+    console.log(`x: ${width >> 0}, y: ${height >> 0}`, cellCount);
+
+    // visuals
     units = generateUnits(plot.value as Mesh, options);
-    const bbox = ombb(giftwrap(plot.value.shapeWorld));
-    hull = new Mesh(bbox.points).setStrokeColor("#0FF").setFillColor("#00ffff11");
-    hull.name = bbox.area + " m2";
+    hull = new Mesh(points).setStrokeColor("#0FF").setFillColor("#00ffff11");
   });
   render();
 }, 100);

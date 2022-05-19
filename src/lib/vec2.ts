@@ -7,7 +7,6 @@ export default class Vec2 extends Array<number> {
   static multiplyScalar = (a: Vec2, number: number) => new Vec2(a.x * number, a.y * number);
   static dot = (a: Vec2, b: Vec2) => a.x * b.x + a.y * b.y;
   static cross = (a: Vec2, b: Vec2) => a.x * b.x - a.y * b.y;
-  static midpoint = (a: Vec2, b: Vec2) => a.add(a.sub(b).divideScalar(2));
   static normalize = (v: Vec2) => Vec2.divideScalar(v, v.magnitude() || 1);
   static divideScalar = (v: Vec2, value: number) => v.multiplyScalar(1 / value);
   static distance = (a: Vec2, b: Vec2) => b.sub(a).magnitude();
@@ -15,6 +14,8 @@ export default class Vec2 extends Array<number> {
   static orthogonal = (v: Vec2) => new Vec2(v.y, -v.x);
   static magnitude = (v: Vec2) => sqrt(v.x * v.x + v.y * v.y);
   static perpendicular = (v: Vec2) => new Vec2(-v.y, v.x);
+  static lerp = (a: Vec2, b: Vec2, t: number) => a.add(a.sub(b).multiplyScalar(t));
+  static midpoint = (a: Vec2, b: Vec2) => Vec2.lerp(a, b, 0.5);
 
   public get x() {
     return this[0];
@@ -88,6 +89,14 @@ export default class Vec2 extends Array<number> {
 
   perpendicular() {
     return new Vec2(-this.y, this.x);
+  }
+
+  lerp(v: Vec2, t: number) {
+    return Vec2.lerp(this, v, t);
+  }
+
+  toString(): string {
+    return `[${this.x}, ${this.y}]`;
   }
 
   clone() {
