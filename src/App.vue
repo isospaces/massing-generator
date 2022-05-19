@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, reactive, ref } from "vue";
+import { onMounted, onUnmounted, reactive, Ref, ref } from "vue";
 import { intersects, intersectsPolygon } from "./lib/collision";
 import { generateUnits, UnitGenerationOptions } from "./lib/generation";
-import { computeOmbb, giftwrap, pointsToLines } from "./lib/geometry";
+import { computeOmbb, giftwrap, OMBB, pointsToLines } from "./lib/geometry";
 import Line from "./lib/line";
 import { abs, clamp, mod, PI, PI2 } from "./lib/math";
 import { Mesh } from "./lib/mesh";
@@ -31,7 +31,7 @@ let renderer = ref<Renderer>();
 let offset = new Vec2(0, 0);
 let zoom = 1;
 
-const plot = ref<Mesh>(new Mesh(POINTS).setFillColor("#F7F0D5").setName("Plot"));
+const plot = ref(new Mesh(POINTS).setFillColor("#F7F0D5").setName("Plot")) as Ref<Mesh>;
 let units: Mesh[] = [];
 let hull: Mesh;
 let activePoint: number | undefined;
@@ -43,35 +43,40 @@ const options: UnitGenerationOptions = reactive({
   angularThreshold: Math.PI / 16,
 });
 
-const render = () => renderer.value!.render([plot.value as Mesh, hull, ...units], offset, zoom);
+const render = () => renderer.value!.render([plot.value, ...units], offset, zoom);
+
+const splitPolygon = (polygon: Vec2[], cellSize: number) => {
+  const { width, height, tr, tl, bl, br } = computeOmbb(giftwrap(plot.value.shapeWorld));
+  const cellCount = (width / cellSize) >> 0;
+  console.log(`x: ${width >> 0}, y: ${height >> 0}`, cellCount);
+
+  const output: Vec2[][] = [];
+
+  for (let i = 1; i < cellCount; i++) {
+    const t = (1 / cellCount) * i;
+    const a = tl.lerp(tr, t);
+    const b = bl.lerp(br, t);
+    const split = new Line(a, b);
+
+    // check for intesection with polygon
+    const indices: number[] = [];
+    const lines = pointsToLines(polygon);
+    lines.forEach((line, index) => {
+      const intersection = intersects(split, line);
+      if (intersection) {
+        indices.push(index);
+        console.log(line.a, line.b);
+      }
+    });
+    for
+  }
+
+  return polygon;
+};
 
 const generate = throttle(() => {
   time("generation", () => {
-    // plot points
-    const boundary = plot.value.shapeWorld;
-
-    // cellular division
-    const { points, width, height, tr, tl, bl, br } = computeOmbb(giftwrap(plot.value.shapeWorld));
-    const cellSize = 100; // metres
-    const cellCount = (width / cellSize) >> 0;
-
-    for (let i = 1; i < cellCount; i++) {
-      const t = (1 / cellCount) * i;
-      const a = tl.lerp(tr, t);
-      const b = bl.lerp(br, t);
-      const split = new Line(a, b);
-      console.log(points);
-      console.log(split.toString(), t);
-
-      // check for intesection with polygon
-      const lines = pointsToLines(boundary);
-      for (const line of lines) {
-        console.log(line.toString());
-        console.log(intersects(split, line));
-      }
-    }
-
-    console.log(`x: ${width >> 0}, y: ${height >> 0}`, cellCount);
+    const points = splitPolygon(plot.value.shapeWorld, 100);
 
     // visuals
     units = generateUnits(plot.value as Mesh, options);
