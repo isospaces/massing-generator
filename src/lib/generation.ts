@@ -23,7 +23,7 @@ export const generateUnits = (plot: Mesh, options: UnitGenerationOptions) => {
   const lines = pointsToLines(simplifiedPolygon)
     .map((line) => ({
       line,
-      normal: line.relative().normalise().perpendicular(),
+      normal: line.relative().normalize().perpendicular(),
     }))
     .sort((a, b) => a.normal.y - b.normal.y)
     .map((data) => data.line);
@@ -36,7 +36,7 @@ export const generateUnits = (plot: Mesh, options: UnitGenerationOptions) => {
   let remainingUnits = count;
   for (const line of lines) {
     const maxDistance = line.distance();
-    const direction = line.relative().normalise();
+    const direction = line.relative().normalize();
     const perpendicular = new Vec2(-direction.y, direction.x);
     const perpendicularOffset = perpendicular.multiplyScalar(dimensions.y / 2 + padding.y);
     const angle = Math.atan(direction.y / direction.x);

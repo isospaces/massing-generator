@@ -53,8 +53,8 @@ export const simplify = (polygon: Vec2[], angularThreshold: number) => {
     const current = getPoint(i);
     const next = getPoint(i + 1);
 
-    const a = current.sub(prev).normalise();
-    const b = next.sub(current).normalise();
+    const a = current.sub(prev).normalize();
+    const b = next.sub(current).normalize();
     const angle = acos(a.dot(b) / (a.magnitude() * b.magnitude()));
 
     return angle > angularThreshold;
@@ -84,7 +84,7 @@ export const ombb = (convexHull: Vec2[]) => {
   let bestArea = Number.MAX_VALUE;
 
   const count = convexHull.length;
-  const edgeDirections = convexHull.map((_, i) => convexHull[(i + 1) % count].sub(convexHull[i]).normalise());
+  const edgeDirections = convexHull.map((_, i) => convexHull[(i + 1) % count].sub(convexHull[i]).normalize());
 
   // compute extreme points
   let minX = Infinity;
