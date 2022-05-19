@@ -14,7 +14,8 @@ export default class Vec2 extends Array<number> {
   static orthogonal = (v: Vec2) => new Vec2(v.y, -v.x);
   static magnitude = (v: Vec2) => sqrt(v.x * v.x + v.y * v.y);
   static perpendicular = (v: Vec2) => new Vec2(-v.y, v.x);
-  static lerp = (a: Vec2, b: Vec2, t: number) => a.add(b.sub(a).multiplyScalar(t));
+  static diff = (a: Vec2, b: Vec2) => b.sub(a);
+  static lerp = (a: Vec2, b: Vec2, t: number) => a.add(Vec2.diff(a, b).multiplyScalar(t));
   static midpoint = (a: Vec2, b: Vec2) => Vec2.lerp(a, b, 0.5);
 
   public get x() {
