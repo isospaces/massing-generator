@@ -60,7 +60,10 @@ const generate = throttle(() => {
       const a = tl.lerp(tr, t);
       const b = bl.lerp(br, t);
       const split = new Line(a, b);
+      console.log(points);
       console.log(split.toString(), t);
+
+      // check for intesection with polygon
       const lines = pointsToLines(boundary);
       for (const line of lines) {
         console.log(line.toString());
