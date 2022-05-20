@@ -1,10 +1,3 @@
-/**
- * Created by Alex Bol on 3/15/2017.
- */
-
-"use strict";
-
-import Flatten from "..";
 import { ray_shoot } from "../algorithms/ray_shooting";
 import * as Intersection from "../algorithms/intersection";
 import * as Relations from "../algorithms/relation";

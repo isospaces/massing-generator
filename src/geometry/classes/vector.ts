@@ -1,4 +1,5 @@
 import { EQ, EQ_0 } from "../utils/utils";
+import { Line } from "./line";
 
 /** A 2-dimensional vector */
 export class Vector {
@@ -12,30 +13,13 @@ export class Vector {
    * @param {Point} pe - end point
    */
   constructor(x: number, y: number);
-  constructor(x: number, y: number);
-  constructor(...args: [number, number] | [Vector, Vector]) {
+  constructor(...args: [number, number] | Vector[]) {
     if (typeof args[0] === "number" && typeof args[1] === "number") {
-      const [x, y] = args;
-      this.x = x;
-      this.y = y;
-    } else {
-    }
-
-    if (args.length === 2) {
-      let a1 = args[0];
-      let a2 = args[1];
-
-      if (typeof a1 == "number" && typeof a2 == "number") {
-        this.x = a1;
-        this.y = a2;
-        return;
-      }
-
-      if (a1 instanceof Flatten.Point && a2 instanceof Flatten.Point) {
-        this.x = a2.x - a1.x;
-        this.y = a2.y - a1.y;
-        return;
-      }
+      this.x = args[0];
+      this.y = args[1];
+    } else 
+      this.x = args[1].x - args[0].x;
+      this.y = args[1].y - args[0].y;
     }
   }
 
@@ -55,6 +39,8 @@ export class Vector {
   get length() {
     return Math.sqrt(this.dot(this));
   }
+
+  /** Returns projection point on given line */
 
   /** Returns true if vectors are equal up to DP_TOL (tolerance) */
   equalTo(v: Vector) {
@@ -81,7 +67,7 @@ export class Vector {
 
   /** Returns unit vector. */
   normalize() {
-    return EQ_0(this.length) ? new Vector() : new Vector(this.x / this.length, this.y / this.length);
+    return EQ_0(this.length) ? new Vector(0, 0) : new Vector(this.x / this.length, this.y / this.length);
   }
 
   /**
@@ -134,10 +120,27 @@ export class Vector {
   }
 
   /** Return vector projection of the current vector on another vector */
-  projectionOn(v: Vector) {
-    let n = v.normalize();
-    let d = this.dot(n);
-    return n.multiply(d);
+  projectionOn(l: Line);
+  projectionOn(v: Vector);
+  projectionOn(arg: Vector | Line) {
+    if (arg instanceof Vector) {
+      let n = v.normalize();
+      let d = this.dot(n);
+      return n.multiply(d);
+    }
+
+    if (this.equalTo(arg.pt))
+      // this point equal to line anchor point
+      return this.clone();
+
+    let vec = new Vector(this, arg.pt);
+    if (EQ_0(vec.cross(arg.norm)))
+      // vector to point from anchor point collinear to normal vector
+      return arg.pt.clone();
+
+    let dist = vec.dot(arg.norm); // signed distance
+    let proj_vec = arg.norm.multiply(dist);
+    return this.add(proj_vec);
   }
 
   /**
@@ -150,4 +153,4 @@ export class Vector {
   }
 }
 
-export const vector = (...args) => new Flatten.Vector(...args);
+export const vector = (...args: any) => new Vector(...args);

@@ -1,4 +1,4 @@
-import { EQ_0 } from "../utils/utils";
+import { EQ_0, LT } from "../utils/utils";
 
 /** *
  * Class representing a point
@@ -44,8 +44,8 @@ export class Point {
    * @returns {boolean}
    */
   lessThan(pt: Point) {
-    if (Flatten.Utils.LT(this.y, pt.y)) return true;
-    if (Flatten.Utils.EQ(this.y, pt.y) && Flatten.Utils.LT(this.x, pt.x)) return true;
+    if (LT(this.y, pt.y)) return true;
+    if (EQ(this.y, pt.y) && LT(this.x, pt.x)) return true;
     return false;
   }
 

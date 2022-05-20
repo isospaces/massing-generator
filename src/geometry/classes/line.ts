@@ -1,36 +1,22 @@
 import * as Intersection from "../algorithms/intersection";
+import { Vector } from "./vector";
 
-/**
- * Class representing a line
- * @type {Line}
- */
 export class Line {
+  /** Point a line passes through */
+  pt = new Vector(0, 0);
   /**
-   * Line may be constructed by point and normal vector or by two points that a line passes through
-   * @param {Point} pt - point that a line passes through
-   * @param {Vector|Point} norm - normal vector to a line or second point a line passes through
+   * Normal vector to a line <br/>
+   * Vector is normalized (length == 1)<br/>
+   * Direction of the vector is chosen to satisfy inequality norm * p >= 0
    */
-  constructor(a: Point, b: Point) {
-    /**
-     * Point a line passes through
-     */
-    this.pt = new Flatten.Point();
-    /**
-     * Normal vector to a line <br/>
-     * Vector is normalized (length == 1)<br/>
-     * Direction of the vector is chosen to satisfy inequality norm * p >= 0
-     * @type {Vector}
-     */
-    this.norm = new Flatten.Vector(0, 1);
+  norm = new Vector(0, 1);
 
-    if (args.length == 0) {
-      return;
-    }
-
+  /** Line may be constructed by point and normal vector or by two points that a line passes through */
+  constructor(a: Vector, b: Vector) {
     if (args.length == 1 && args[0] instanceof Object && args[0].name === "line") {
       let { pt, norm } = args[0];
-      this.pt = new Flatten.Point(pt);
-      this.norm = new Flatten.Vector(norm);
+      this.pt = new Vector(pt);
+      this.norm = new Vector(norm);
       return;
     }
 
