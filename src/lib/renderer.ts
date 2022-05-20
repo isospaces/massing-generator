@@ -1,13 +1,15 @@
 import { mod } from "./math";
-import { Mesh } from "./mesh";
-import Vec2 from "./vec2";
+import { mesh, Mesh } from "./mesh";
+import GEO from "@flatten-js/core";
+
+const { point, vector } = GEO;
 
 export const PIXELS_PER_METRE = 4;
 
 export default class Renderer {
   public readonly ctx: CanvasRenderingContext2D;
-  public readonly center: Vec2;
-  public size: Vec2;
+  public readonly center: GEO.Vector;
+  public size: GEO.Vector;
   public outlines = true;
   public annotations = false;
   public vertices = false;
@@ -20,13 +22,13 @@ export default class Renderer {
     // setup canvas size and dpr
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
-    this.size = new Vec2(rect.width * dpr, rect.height * dpr);
+    this.size = vector(rect.width * dpr, rect.height * dpr);
     canvas.width = this.size.x;
     canvas.height = this.size.y;
     this.ctx.scale(dpr, dpr);
 
     // sizing
-    this.center = this.size.divideScalar(2);
+    this.center = this.size.multiply(1 / 2);
 
     // antialising
     this.ctx.imageSmoothingEnabled = true;
@@ -37,9 +39,9 @@ export default class Renderer {
     this.ctx.lineWidth = 1;
   }
 
-  public render(scene: Mesh[], offset: Vec2, zoom = 1) {
+  public render(scene: Mesh[], offset: GEO.Vector, zoom = 1) {
     console.time("render");
-    const [w, h] = this.size;
+    const { x: w, y: h } = this.size;
     const pixelScale = PIXELS_PER_METRE * zoom;
 
     this.ctx.resetTransform();
@@ -55,7 +57,7 @@ export default class Renderer {
   }
 
   private renderMesh(mesh: Mesh, pixelScale: number) {
-    const points = mesh.shapeWorld.map((point) => point.multiplyScalar(pixelScale));
+    const points = mesh.shapeWorld().map(({ x, y }) => vector(x, y).multiply(pixelScale));
     const [first, ...rest] = points;
     // color
     this.ctx.strokeStyle = mesh.strokeColor;
@@ -76,7 +78,8 @@ export default class Renderer {
     }
 
     if (this.annotations) {
-      const { x, y } = mesh.position.multiplyScalar(pixelScale);
+      const p = mesh.position;
+      const { x, y } = vector(p.x, p.y).multiply(pixelScale);
       this.ctx.fillStyle = "#000";
       this.ctx.textAlign = "center";
       this.ctx.font = "10px Arial";
@@ -84,16 +87,16 @@ export default class Renderer {
     }
   }
 
-  private renderVertex(position: Vec2, radius: number) {
-    const [x, y] = position;
+  private renderVertex(position: GEO.Vector, radius: number) {
+    const { x, y } = position;
     this.ctx.beginPath();
     this.ctx.ellipse(x, y, radius, radius, 0, 0, 360);
     this.ctx.fill();
   }
 
-  private renderGrid = (offset: Vec2, pixelScale: number) => {
-    const [dx, dy] = offset;
-    const [w, h] = this.size;
+  private renderGrid = (offset: GEO.Vector, pixelScale: number) => {
+    const { x: dx, y: dy } = offset;
+    const { x: w, y: h } = this.size;
 
     this.ctx.strokeStyle = "#bbb";
     this.ctx.beginPath();

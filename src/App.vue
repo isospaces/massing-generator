@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, reactive, Ref, ref } from "vue";
-import { intersects, intersectsPolygon } from "./lib/collision";
 import { generateUnits, UnitGenerationOptions } from "./lib/generation";
-import { computeOmbb, giftwrap, OMBB, pointsToLines } from "./lib/geometry";
-import Line from "./lib/line";
 import { abs, clamp, mod, PI, PI2 } from "./lib/math";
-import { Mesh } from "./lib/mesh";
+import { mesh, Mesh } from "./lib/mesh";
 import Renderer, { PIXELS_PER_METRE } from "./lib/renderer";
 import { throttle, time } from "./lib/utils";
-import Vec2 from "./lib/vec2";
+import GEO from "@flatten-js/core";
+
+const { vector, point } = GEO;
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 3;
-const POINTS = [
+const POLYGON = new GEO.Polygon([
   [74.5635488461703, 63.75],
   [68.49629332353302, 70.15608126530424],
   [59.72299125324935, 68.94712131272668],
@@ -25,62 +24,39 @@ const POINTS = [
   [18.249999999999996, -50.9018065109849],
   [47.99717836547641, -34.00696381242349],
   [60.159588124688696, -16.822156332433234],
-].map((p) => new Vec2(p[0], p[1]));
+]);
 
 let renderer = ref<Renderer>();
-let offset = new Vec2(0, 0);
+let offset = vector();
 let zoom = 1;
-
-const plot = ref(new Mesh(POINTS).setFillColor("#F7F0D5").setName("Plot")) as Ref<Mesh>;
 let units: Mesh[] = [];
 let hull: Mesh;
 let activePoint: number | undefined;
 
+const plot = ref(
+  mesh(POLYGON, {
+    name: "Plot",
+    fillColor: "#F7F0D5",
+  })
+);
+
 const options: UnitGenerationOptions = reactive({
   count: 50,
   spacing: 0,
-  padding: new Vec2(1, 6),
+  padding: vector(1, 6),
   angularThreshold: Math.PI / 16,
 });
 
 const render = () => renderer.value!.render([plot.value, ...units], offset, zoom);
 
-const splitPolygon = (polygon: Vec2[], cellSize: number) => {
-  const { width, height, tr, tl, bl, br } = computeOmbb(giftwrap(plot.value.shapeWorld));
-  const cellCount = (width / cellSize) >> 0;
-  console.log(`x: ${width >> 0}, y: ${height >> 0}`, cellCount);
-
-  const output: Vec2[][] = [];
-
-  for (let i = 1; i < cellCount; i++) {
-    const t = (1 / cellCount) * i;
-    const a = tl.lerp(tr, t);
-    const b = bl.lerp(br, t);
-    const split = new Line(a, b);
-
-    // check for intesection with polygon
-    const indices: number[] = [];
-    const lines = pointsToLines(polygon);
-    lines.forEach((line, index) => {
-      const intersection = intersects(split, line);
-      if (intersection) {
-        indices.push(index);
-        console.log(line.a, line.b);
-      }
-    });
-    for
-  }
-
-  return polygon;
-};
-
 const generate = throttle(() => {
   time("generation", () => {
-    const points = splitPolygon(plot.value.shapeWorld, 100);
-
-    // visuals
+    const poly = new GEO.Polygon(plot.value.shapeWorld());
     units = generateUnits(plot.value as Mesh, options);
-    hull = new Mesh(points).setStrokeColor("#0FF").setFillColor("#00ffff11");
+    hull = mesh(poly, {
+      strokeColor: "#0FF",
+      fillColor: "#00ffff11",
+    });
   });
   render();
 }, 100);
@@ -97,11 +73,11 @@ const onMouseWheel = (e: any) => {
 const onPointerDown = (e: PointerEvent) => {
   if (!renderer.value!.vertices) return;
 
-  const position = new Vec2(e.clientX, e.clientY);
+  const position = vector(e.clientX, e.clientY);
   console.log("mouse: ", position);
-  plot.value.shapeWorld.forEach((p, i) => {
-    const point = p.multiplyScalar(PIXELS_PER_METRE).add(renderer.value!.center);
-    const distanceToPoint = position.sub(point).magnitude();
+  plot.value.shapeWorld().forEach(({ x, y }, i) => {
+    const vertexPosition = vector(x, y).multiply(PIXELS_PER_METRE).add(renderer.value!.center);
+    const distanceToPoint = position.subtract(vertexPosition).length;
     if (distanceToPoint < 5) activePoint = i;
   });
 
@@ -118,8 +94,8 @@ const onPointerUp = (e: PointerEvent) => {
 const onPointerMove = (e: PointerEvent) => {
   if (activePoint === undefined) return;
 
-  const delta = new Vec2(e.movementX, e.movementY).divideScalar(PIXELS_PER_METRE);
-  plot.value.translatePoint(activePoint, delta);
+  const delta = vector(e.movementX, e.movementY).multiply(1 / PIXELS_PER_METRE);
+  plot.value.translateVertex(activePoint, delta);
   render();
 };
 

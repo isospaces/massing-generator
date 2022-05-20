@@ -235,11 +235,3 @@ const createOmbb = (
     tr,
   };
 };
-
-const splitPolygon = (polygon: Vec2[], rayOrig: Vec2, rayDir: Vec2) => {
-  if (!polygon || polygon.length < 3) throw new Error("input polygon must have at least 3 vertices");
-
-  //sort inter points by distance from the ray origin
-
-  return output;
-};
