@@ -57,7 +57,7 @@ export default class Renderer {
   }
 
   private renderMesh(mesh: Mesh, pixelScale: number) {
-    const points = mesh.shapeWorld().map(({ x, y }) => vector(x, y).multiply(pixelScale));
+    const points = mesh.toWorld().map(({ x, y }) => vector(x, y).multiply(pixelScale));
     const [first, ...rest] = points;
     // color
     this.ctx.strokeStyle = mesh.strokeColor;

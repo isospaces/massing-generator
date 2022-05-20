@@ -12,7 +12,7 @@ export interface MeshOptions {
 
 export interface Mesh extends MeshOptions {
   poly: GEO.Polygon;
-  shapeWorld(): GEO.Point[];
+  toWorld(): GEO.Point[];
   translateVertex(index: number, value: GEO.Vector): void;
 }
 
@@ -25,7 +25,7 @@ export const mesh = (poly: GEO.Polygon, options?: Partial<MeshOptions>): Mesh =>
     poly,
     position: point(),
     rotation: 0,
-    shapeWorld() {
+    toWorld() {
       return this.poly.vertices.map((p) => p.rotate(this.rotation).translate(vector(this.position.x, this.position.y)));
     },
     translateVertex(index: number, value: GEO.Vector) {

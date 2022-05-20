@@ -51,7 +51,7 @@ const render = () => renderer.value!.render([plot.value, ...units], offset, zoom
 
 const generate = throttle(() => {
   time("generation", () => {
-    const poly = new GEO.Polygon(plot.value.shapeWorld());
+    const poly = new GEO.Polygon(plot.value.toWorld());
     units = generateUnits(plot.value as Mesh, options);
     hull = mesh(poly, {
       strokeColor: "#0FF",
@@ -75,7 +75,7 @@ const onPointerDown = (e: PointerEvent) => {
 
   const position = vector(e.clientX, e.clientY);
   console.log("mouse: ", position);
-  plot.value.shapeWorld().forEach(({ x, y }, i) => {
+  plot.value.toWorld().forEach(({ x, y }, i) => {
     const vertexPosition = vector(x, y).multiply(PIXELS_PER_METRE).add(renderer.value!.center);
     const distanceToPoint = position.subtract(vertexPosition).length;
     if (distanceToPoint < 5) activePoint = i;
