@@ -13,7 +13,11 @@ import {
 } from "../data-structures/smart_intersections";
 import { Multiline } from "./multiline";
 import { intersectEdge2Line } from "../algorithms/intersection";
-import { INSIDE, BOUNDARY } from "../utils/constants";
+import { Inclusion } from "../utils/constants";
+import { Vector } from "./vector";
+import { Edge } from "./edge";
+
+type VectorLike = Vector | [number, number];
 
 /**
  * Class representing a polygon.<br/>
@@ -34,98 +38,25 @@ export class Polygon {
    * Alternatively, it is possible to use polygon.addFace method
    * @param {args} - array of shapes or array of arrays
    */
-  constructor() {
-    /**
-     * Container of faces (closed loops), may be empty
-     * @type {PlanarSet}
-     */
-    this.faces = new Flatten.PlanarSet();
-    /**
-     * Container of edges
-     * @type {PlanarSet}
-     */
-    this.edges = new Flatten.PlanarSet();
-
-    /* It may be array of something that may represent one loop (face) or
-         array of arrays that represent multiple loops
-         */
-    let args = [...arguments];
-    if (
-      args.length === 1 &&
-      ((args[0] instanceof Array && args[0].length > 0) ||
-        args[0] instanceof Flatten.Circle ||
-        args[0] instanceof Flatten.Box)
-    ) {
-      let argsArray = args[0];
-      if (
-        args[0] instanceof Array &&
-        args[0].every((loop) => {
-          return loop instanceof Array;
-        })
-      ) {
-        if (
-          argsArray.every((el) => {
-            return el instanceof Array && el.length === 2 && typeof el[0] === "number" && typeof el[1] === "number";
-          })
-        ) {
-          this.faces.add(new Flatten.Face(this, argsArray)); // one-loop polygon as array of pairs of numbers
-        } else {
-          for (let loop of argsArray) {
-            // multi-loop polygon
-            /* Check extra level of nesting for GeoJSON-style multi polygons */
-            if (
-              loop instanceof Array &&
-              loop[0] instanceof Array &&
-              loop[0].every((el) => {
-                return el instanceof Array && el.length === 2 && typeof el[0] === "number" && typeof el[1] === "number";
-              })
-            ) {
-              for (let loop1 of loop) {
-                this.faces.add(new Flatten.Face(this, loop1));
-              }
-            } else {
-              this.faces.add(new Flatten.Face(this, loop));
-            }
-          }
-        }
-      } else {
-        this.faces.add(new Flatten.Face(this, argsArray)); // one-loop polygon
-      }
-    }
+  constructor(points: [number, number][]) {
+    this.faces = new PlanarSet();
+    this.edges = new PlanarSet();
   }
 
-  /**
-   * (Getter) Returns bounding box of the polygon
-   * @returns {Box}
-   */
   get box() {
     return [...this.faces].reduce((acc, face) => acc.merge(face.box), new Flatten.Box());
   }
 
-  /**
-   * (Getter) Returns array of vertices
-   * @returns {Array}
-   */
   get vertices() {
     return [...this.edges].map((edge) => edge.start);
   }
 
-  /**
-   * Create new cloned instance of the polygon
-   * @returns {Polygon}
-   */
+  /** Create new cloned instance of the polygon */
   clone() {
-    let polygon = new Polygon();
-    for (let face of this.faces) {
-      polygon.addFace(face.shapes);
-    }
-    return polygon;
+    return new Polygon();
   }
 
-  /**
-   * Return true is polygon has no edges
-   * @returns {boolean}
-   */
+  /** Return true is polygon has no edges */
   isEmpty() {
     return this.edges.size === 0;
   }
@@ -162,22 +93,6 @@ export class Polygon {
   }
 
   /**
-   * Add new face to polygon. Returns added face
-   * @param {Points[]|Segments[]|Arcs[]|Circle|Box} args -  new face may be create with one of the following ways: <br/>
-   * 1) array of points that describe closed path (edges are segments) <br/>
-   * 2) array of shapes (segments and arcs) which describe closed path <br/>
-   * 3) circle - will be added as counterclockwise arc <br/>
-   * 4) box - will be added as counterclockwise rectangle <br/>
-   * You can chain method face.reverse() is you need to change direction of the creates face
-   * @returns {Face}
-   */
-  addFace(...args) {
-    let face = new Flatten.Face(this, ...args);
-    this.faces.add(face);
-    return face;
-  }
-
-  /**
    * Delete existing face from polygon
    * @param {Face} face Face to be deleted
    * @returns {boolean}
@@ -190,73 +105,14 @@ export class Polygon {
   }
 
   /**
-   * Clear all faces and create new faces from edges
-   */
-  recreateFaces() {
-    // Remove all faces
-    this.faces.clear();
-    for (let edge of this.edges) {
-      edge.face = null;
-    }
-
-    // Restore faces
-    let first;
-    let unassignedEdgeFound = true;
-    while (unassignedEdgeFound) {
-      unassignedEdgeFound = false;
-      for (let edge of this.edges) {
-        if (edge.face === null) {
-          first = edge;
-          unassignedEdgeFound = true;
-          break;
-        }
-      }
-
-      if (unassignedEdgeFound) {
-        let last = first;
-        do {
-          last = last.next;
-        } while (last.next !== first);
-
-        this.addFace(first, last);
-      }
-    }
-  }
-
-  /**
-   * Delete chain of edges from the face.
-   * @param {Face} face Face to remove chain
-   * @param {Edge} edgeFrom Start of the chain of edges to be removed
-   * @param {Edge} edgeTo End of the chain of edges to be removed
-   */
-  removeChain(face, edgeFrom, edgeTo) {
-    // Special case: all edges removed
-    if (edgeTo.next === edgeFrom) {
-      this.deleteFace(face);
-      return;
-    }
-    for (let edge = edgeFrom; edge !== edgeTo.next; edge = edge.next) {
-      face.remove(edge);
-      this.edges.delete(edge); // delete from PlanarSet of edges and update index
-      if (face.isEmpty()) {
-        this.deleteFace(face); // delete from PlanarSet of faces and update index
-        break;
-      }
-    }
-  }
-
-  /**
    * Add point as a new vertex and split edge. Point supposed to belong to an edge.
    * When edge is split, new edge created from the start of the edge to the new vertex
    * and inserted before current edge.
    * Current edge is trimmed and updated.
    * Method returns new edge added. If no edge added, it returns edge before vertex
-   * @param {Point} pt Point to be added as a new vertex
-   * @param {Edge} edge Edge to be split with new vertex and then trimmed from start
-   * @returns {Edge}
    */
-  addVertex(pt, edge) {
-    let shapes = edge.shape.split(pt);
+  addVertex(point: Vector, edge: Edge) {
+    let shapes = edge.shape.split(point);
     // if (shapes.length < 2) return;
 
     if (shapes[0] === null)
@@ -267,7 +123,7 @@ export class Polygon {
       // point incident to edge end vertex, return edge itself
       return edge;
 
-    let newEdge = new Flatten.Edge(shapes[0]);
+    let newEdge = new Edge(shapes[0]);
     let edgeBefore = edge.prev;
 
     /* Insert first split edge into linked list after edgeBefore */
@@ -320,23 +176,20 @@ export class Polygon {
   /**
    * Cut face of polygon with a segment between two points and create two new polygons
    * Supposed that a segments between points does not intersect any other edge
-   * @param {Point} pt1
-   * @param {Point} pt2
-   * @returns {Polygon[]}
    */
-  cutFace(pt1, pt2) {
-    let edge1 = this.findEdgeByPoint(pt1);
-    let edge2 = this.findEdgeByPoint(pt2);
+  cutFace(pointA: Vector, pointB: Vector) {
+    let edge1 = this.findEdgeByPoint(pointA);
+    let edge2 = this.findEdgeByPoint(pointB);
     if (edge1.face !== edge2.face) return [];
 
     // Cut face into two and create new polygon with two faces
-    let edgeBefore1 = this.addVertex(pt1, edge1);
-    edge2 = this.findEdgeByPoint(pt2);
-    let edgeBefore2 = this.addVertex(pt2, edge2);
+    let edgeBefore1 = this.addVertex(pointA, edge1);
+    edge2 = this.findEdgeByPoint(pointB);
+    let edgeBefore2 = this.addVertex(pointB, edge2);
 
     let face = edgeBefore1.face;
-    let newEdge1 = new Flatten.Edge(new Flatten.Segment(edgeBefore1.end, edgeBefore2.end));
-    let newEdge2 = new Flatten.Edge(new Flatten.Segment(edgeBefore2.end, edgeBefore1.end));
+    let newEdge1 = new Edge(new Segment(edgeBefore1.end, edgeBefore2.end));
+    let newEdge2 = new Edge(new Segment(edgeBefore2.end, edgeBefore1.end));
 
     // Swap links
     edgeBefore1.next.prev = newEdge2;
@@ -370,7 +223,7 @@ export class Polygon {
    * @param {Line} line - cutting line
    * @returns {Polygon} newPoly - resulted polygon
    */
-  cutWithLine(line) {
+  cutWithLine(line: Line) {
     let newPoly = this.clone();
 
     let multiline = new Multiline([line]);

@@ -1,17 +1,15 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, reactive, Ref, ref } from "vue";
+import { Vector } from "./geometry/classes/vector";
 import { generateUnits, UnitGenerationOptions } from "./lib/generation";
 import { abs, clamp, mod, PI, PI2 } from "./lib/math";
 import { mesh, Mesh } from "./lib/mesh";
 import Renderer, { PIXELS_PER_METRE } from "./lib/renderer";
 import { throttle, time } from "./lib/utils";
-import GEO from "@flatten-js/core";
-
-const { vector, point } = GEO;
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 3;
-const POLYGON = new GEO.Polygon([
+const POLYGON = new Polygon([
   [74.5635488461703, 63.75],
   [68.49629332353302, 70.15608126530424],
   [59.72299125324935, 68.94712131272668],
@@ -27,7 +25,7 @@ const POLYGON = new GEO.Polygon([
 ]);
 
 let renderer = ref<Renderer>();
-let offset = vector();
+let offset = new Vector(0, 0);
 let zoom = 1;
 let units: Mesh[] = [];
 let hull: Mesh;
@@ -43,7 +41,7 @@ const plot = ref(
 const options: UnitGenerationOptions = reactive({
   count: 50,
   spacing: 0,
-  padding: vector(1, 6),
+  padding: new Vector(1, 6),
   angularThreshold: Math.PI / 16,
 });
 
@@ -51,7 +49,7 @@ const render = () => renderer.value!.render([plot.value, ...units], offset, zoom
 
 const generate = throttle(() => {
   time("generation", () => {
-    const poly = new GEO.Polygon(plot.value.toWorld());
+    const poly = new Polygon(plot.value.toWorld());
     units = generateUnits(plot.value as Mesh, options);
     hull = mesh(poly, {
       strokeColor: "#0FF",
@@ -73,10 +71,10 @@ const onMouseWheel = (e: any) => {
 const onPointerDown = (e: PointerEvent) => {
   if (!renderer.value!.vertices) return;
 
-  const position = vector(e.clientX, e.clientY);
+  const position = new Vector(e.clientX, e.clientY);
   console.log("mouse: ", position);
   plot.value.toWorld().forEach(({ x, y }, i) => {
-    const vertexPosition = vector(x, y).multiply(PIXELS_PER_METRE).add(renderer.value!.center);
+    const vertexPosition = new Vector(x, y).multiply(PIXELS_PER_METRE).add(renderer.value!.center);
     const distanceToPoint = position.subtract(vertexPosition).length;
     if (distanceToPoint < 5) activePoint = i;
   });
@@ -94,7 +92,7 @@ const onPointerUp = (e: PointerEvent) => {
 const onPointerMove = (e: PointerEvent) => {
   if (activePoint === undefined) return;
 
-  const delta = vector(e.movementX, e.movementY).multiply(1 / PIXELS_PER_METRE);
+  const delta = new Vector(e.movementX, e.movementY).multiply(1 / PIXELS_PER_METRE);
   plot.value.translateVertex(activePoint, delta);
   render();
 };

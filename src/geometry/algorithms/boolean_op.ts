@@ -1,14 +1,4 @@
 import Errors from "../utils/errors";
-import {
-  INSIDE,
-  OUTSIDE,
-  BOUNDARY,
-  OVERLAP_SAME,
-  OVERLAP_OPPOSITE,
-  NOT_VERTEX,
-  START_VERTEX,
-  END_VERTEX,
-} from "../utils/constants";
 import LinkedList from "../data-structures/linked-list";
 import {
   addToIntPoints,
@@ -20,58 +10,53 @@ import {
   intPointsPoolCount,
   splitByIntersections,
 } from "../data-structures/smart_intersections";
+import { VertexType, Inclusion, Overlap } from "../utils/constants";
+import { Polygon } from "../classes/polygon";
 
-export const BOOLEAN_UNION = 1;
-export const BOOLEAN_INTERSECT = 2;
-export const BOOLEAN_SUBTRACT = 3;
+export enum Operation {
+  Union,
+  Intersect,
+  Subtract,
+}
 
 /**
  * Unify two polygons polygons and returns new polygon. <br/>
  * Point belongs to the resulted polygon if it belongs to the first OR to the second polygon
- * @param {Polygon} polygon1 - first operand
- * @param {Polygon} polygon2 - second operand
- * @returns {Polygon}
  */
-export function unify(polygon1, polygon2) {
-  let [res_poly, wrk_poly] = booleanOpBinary(polygon1, polygon2, BOOLEAN_UNION, true);
+export function unify(a: Polygon, b: Polygon) {
+  let [res_poly, wrk_poly] = booleanOpBinary(a, b, Operation.Union, true);
   return res_poly;
 }
 
 /**
  * Subtract second polygon from the first and returns new polygon
  * Point belongs to the resulted polygon if it belongs to the first polygon AND NOT to the second polygon
- * @param {Polygon} polygon1 - first operand
- * @param {Polygon} polygon2 - second operand
- * @returns {Polygon}
  */
-export function subtract(polygon1, polygon2) {
-  let polygon2_tmp = polygon2.clone();
+export function subtract(a: Polygon, b: Polygon) {
+  let polygon2_tmp = b.clone();
   let polygon2_reversed = polygon2_tmp.reverse();
-  let [res_poly, wrk_poly] = booleanOpBinary(polygon1, polygon2_reversed, BOOLEAN_SUBTRACT, true);
+  let [res_poly, wrk_poly] = booleanOpBinary(a, polygon2_reversed, Operation.Subtract, true);
   return res_poly;
 }
 
 /**
  * Intersect two polygons and returns new polygon
  * Point belongs to the resulted polygon is it belongs to the first AND to the second polygon
- * @param {Polygon} polygon1 - first operand
- * @param {Polygon} polygon2 - second operand
- * @returns {Polygon}
  */
-export function intersect(polygon1, polygon2) {
-  let [res_poly, wrk_poly] = booleanOpBinary(polygon1, polygon2, BOOLEAN_INTERSECT, true);
+export function intersect(a: Polygon, b: Polygon) {
+  let [res_poly, wrk_poly] = booleanOpBinary(a, b, Operation.Intersect, true);
   return res_poly;
 }
 
 /**
  * Returns boundary of intersection between two polygons as two arrays of shapes (Segments/Arcs) <br/>
  * The first array are shapes from the first polygon, the second array are shapes from the second
- * @param {Polygon} polygon1 - first operand
- * @param {Polygon} polygon2 - second operand
+ * @param {Polygon} a - first operand
+ * @param {Polygon} b - second operand
  * @returns {Shape[][]}
  */
-export function innerClip(polygon1, polygon2) {
-  let [res_poly, wrk_poly] = booleanOpBinary(polygon1, polygon2, BOOLEAN_INTERSECT, false);
+export function innerClip(a: Polygon, b: Polygon) {
+  let [res_poly, wrk_poly] = booleanOpBinary(a, b, Operation.Intersect, false);
 
   let clip_shapes1 = [];
   for (let face of res_poly.faces) {
