@@ -13,15 +13,21 @@ export const ORIENTATION = { CCW: -1, CW: 1, NOT_ORIENTABLE: 0 };
 
 export const PIx2 = 2 * Math.PI;
 
-export const INSIDE = 1;
-export const OUTSIDE = 0;
-export const BOUNDARY = 2;
-export const CONTAINS = 3;
-export const INTERLACE = 4;
+export enum Inclusion {
+  OUTSIDE,
+  INSIDE,
+  BOUNDARY,
+  CONTAINS,
+  INTERLACE,
+}
 
-export const OVERLAP_SAME = 1;
-export const OVERLAP_OPPOSITE = 2;
+export enum Overlap {
+  OVERLAP_SAME = 1,
+  OVERLAP_OPPOSITE = 2,
+}
 
-export const NOT_VERTEX = 0;
-export const START_VERTEX = 1;
-export const END_VERTEX = 2;
+export enum VertexType {
+  NOT_VERTEX = 0,
+  START_VERTEX = 1,
+  END_VERTEX = 2,
+}
