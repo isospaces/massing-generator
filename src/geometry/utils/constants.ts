@@ -14,16 +14,16 @@ export const ORIENTATION = { CCW: -1, CW: 1, NOT_ORIENTABLE: 0 };
 export const PIx2 = 2 * Math.PI;
 
 export enum Inclusion {
-  OUTSIDE,
-  INSIDE,
-  BOUNDARY,
-  CONTAINS,
-  INTERLACE,
+  Outside,
+  Inside,
+  Boundary,
+  Contains,
+  Interlace,
 }
 
 export enum Overlap {
-  OVERLAP_SAME = 1,
-  OVERLAP_OPPOSITE = 2,
+  Same = 1,
+  Opposite = 2,
 }
 
 export enum VertexType {
