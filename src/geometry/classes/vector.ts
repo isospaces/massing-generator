@@ -1,25 +1,28 @@
+import { Shape } from "..";
 import { EQ, EQ_0 } from "../utils/utils";
 import { Line } from "./line";
+import { Segment } from "./segment";
+import Distance from "../algorithms/distance";
 
 /** A 2-dimensional vector */
 export class Vector {
   x = 0;
   y = 0;
 
-  /**
-   * Vector may be constructed by two points, or by two float numbers,
-   * or by array of two numbers
-   * @param {Point} ps - start point
-   * @param {Point} pe - end point
-   */
+  /** Vector may be constructed by two points, or by two float numbers */
   constructor(x: number, y: number);
-  constructor(...args: [number, number] | Vector[]) {
-    if (typeof args[0] === "number" && typeof args[1] === "number") {
-      this.x = args[0];
-      this.y = args[1];
-    } else 
-      this.x = args[1].x - args[0].x;
-      this.y = args[1].y - args[0].y;
+  constructor(a: Vector, b: Vector);
+  constructor(...args: [number, number] | [Vector, Vector]) {
+    if (args.length !== 2) return;
+
+    if (args[0] instanceof Vector) {
+      const [a, b] = args as Vector[];
+      this.x = b.x - a.x;
+      this.y = b.y - a.y;
+    } else {
+      const [a, b] = args as number[];
+      this.x = a;
+      this.y = b;
     }
   }
 
@@ -119,28 +122,70 @@ export class Vector {
     return angle;
   }
 
+  /** Calculate distance and shortest segment from point to shape and return as array [distance, shortest segment] */
+  distanceTo(shape: Shape) {
+    if (shape instanceof Vector) {
+      const dx = shape.x - this.x;
+      const dy = shape.y - this.y;
+      return [Math.sqrt(dx * dx + dy * dy), new Segment(this, shape)];
+    }
+
+    if (shape instanceof Line) {
+      return Distance.Point.toLine(this, shape);
+    }
+
+    if (shape instanceof Circle) {
+      return Distance.Point.toCircle(this, shape);
+    }
+
+    if (shape instanceof Segment) {
+      return Distance.Point.toSegment(this, shape);
+    }
+
+    if (shape instanceof Arc) {
+      // let [dist, ...rest] = Distance.point2arc(this, shape);
+      // return dist;
+      return Distance.Point.toArc(this, shape);
+    }
+
+    if (shape instanceof Polygon) {
+      // let [dist, ...rest] = Distance.point2polygon(this, shape);
+      // return dist;
+      return Distance.toPolygon(this, shape);
+    }
+
+    if (shape instanceof PlanarSet) {
+      return Distance.shape2planarSet(this, shape);
+    }
+  }
+
+  on(shape: Shape) {
+    return shape instanceof Vector ? this.equalTo(shape) : shape.contains(this);
+  }
+
   /** Return vector projection of the current vector on another vector */
-  projectionOn(l: Line);
-  projectionOn(v: Vector);
-  projectionOn(arg: Vector | Line) {
+  projectionOn(l: Line): Vector;
+  projectionOn(v: Vector): Vector;
+  projectionOn(arg: Vector | Line): Vector {
     if (arg instanceof Vector) {
-      let n = v.normalize();
+      let n = arg.normalize();
       let d = this.dot(n);
       return n.multiply(d);
     }
 
-    if (this.equalTo(arg.pt))
+    const l = arg as Line;
+    if (this.equalTo(l.pt))
       // this point equal to line anchor point
       return this.clone();
 
-    let vec = new Vector(this, arg.pt);
-    if (EQ_0(vec.cross(arg.norm)))
+    const vec = new Vector(this, l.pt);
+    if (EQ_0(vec.cross(l.norm)))
       // vector to point from anchor point collinear to normal vector
-      return arg.pt.clone();
+      return l.pt.clone();
 
-    let dist = vec.dot(arg.norm); // signed distance
-    let proj_vec = arg.norm.multiply(dist);
-    return this.add(proj_vec);
+    const dist = vec.dot(l.norm); // signed distance
+    const projection = l.norm.multiply(dist);
+    return this.add(projection);
   }
 
   /**
@@ -152,5 +197,3 @@ export class Vector {
     return Object.assign({}, this, { name: "vector" });
   }
 }
-
-export const vector = (...args: any) => new Vector(...args);
