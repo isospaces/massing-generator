@@ -3,7 +3,7 @@ import { EQ_0, LT } from "../utils/utils";
 /** *
  * Class representing a point
  */
-export class Point {
+class Point {
   x = 0;
   y = 0;
 

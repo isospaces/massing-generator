@@ -1,8 +1,9 @@
 import { Shape } from "..";
-import { EQ, EQ_0 } from "../utils/utils";
+import { EQ, EQ_0, LT } from "../utils/utils";
 import { Line } from "./line";
 import { Segment } from "./segment";
 import Distance from "../algorithms/distance";
+import { Box } from "./box";
 
 /** A 2-dimensional vector */
 export class Vector {
@@ -186,6 +187,22 @@ export class Vector {
     const dist = vec.dot(l.norm); // signed distance
     const projection = l.norm.multiply(dist);
     return this.add(projection);
+  }
+
+  /** Returns bounding box of a point */
+  get box() {
+    return new Box(this.x, this.y, this.x, this.y);
+  }
+
+  /**
+   * Defines predicate "less than" between points. Returns true if the point is less than query points, false otherwise <br/>
+   * By definition point1 < point2 if {point1.y < point2.y || point1.y == point2.y && point1.x < point2.x <br/>
+   * Numeric values compared with [DP_TOL]{@link DP_TOL} tolerance
+   */
+  lessThan(point: Vector) {
+    if (LT(this.y, point.y)) return true;
+    if (EQ(this.y, point.y) && LT(this.x, point.x)) return true;
+    return false;
   }
 
   /**

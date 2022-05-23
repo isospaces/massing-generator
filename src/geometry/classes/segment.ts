@@ -4,6 +4,10 @@ import { EQ_0 } from "../utils/utils";
 import { Vector } from "./vector";
 import * as Intersect from "../algorithms/intersection";
 import * as Distance from "../algorithms/distance";
+import { Point } from "./point";
+import { Line } from "./line";
+import { Box } from "./box";
+import { Arc } from "./arc";
 
 export class Segment {
   start = new Vector(0, 0);
@@ -57,7 +61,7 @@ export class Segment {
 
   /** Returns array of intersection points between segment and other shape */
   intersect(shape: Shape) {
-    if (shape instanceof Point) {
+    if (shape instanceof Vector) {
       return this.contains(shape) ? [shape] : [];
     }
 
@@ -87,7 +91,7 @@ export class Segment {
   }
 
   /** Calculate distance and shortest segment from segment to shape and return as array [distance, shortest segment] */
-  distanceTo(shape) {
+  distanceTo(shape: Shape) {
     if (shape instanceof Point) {
       let [dist, shortest_segment] = Distance.point2segment(shape, this);
       shortest_segment = shortest_segment.reverse();
@@ -95,7 +99,7 @@ export class Segment {
     }
 
     if (shape instanceof Circle) {
-      let [dist, shortest_segment] = Distance.segment2circle(this, shape);
+      let [dist, shortest_segment] = Distance.segmentToCircle(this, shape);
       return [dist, shortest_segment];
     }
 
@@ -119,10 +123,7 @@ export class Segment {
       return [dist, shortest_segment];
     }
 
-    if (shape instanceof PlanarSet) {
-      let [dist, shortest_segment] = Distance.shape2planarSet(this, shape);
-      return [dist, shortest_segment];
-    }
+    // if (shape instanceof PlanarSet) return Distance.shapeToPlanarSet(this, shape);
   }
 
   /**

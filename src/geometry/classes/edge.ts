@@ -56,11 +56,7 @@ export class Edge {
     return this.shape.middle();
   }
 
-  /**
-   * Get point at given length
-   * @param {number} length - The length along the edge
-   * @returns {Point}
-   */
+  /** Get point at given length */
   pointAtLength(length: number) {
     return this.shape.pointAtLength(length);
   }
@@ -72,8 +68,6 @@ export class Edge {
 
   /**
    * Set inclusion flag of the edge with respect to another polygon
-   * Inclusion flag is one of Inclusion.Inside, Inclusion.Outside, Flatten.BOUNDARY
-   * @param polygon
    */
   setInclusion(polygon: Polygon) {
     if (this.inclusion !== undefined) return this.inclusion;
