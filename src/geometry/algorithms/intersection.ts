@@ -1,109 +1,109 @@
-/**
- * Intersection
- *
- * */
+import { Line } from "../classes/line";
+import { Segment } from "../classes/segment";
+import { Vector } from "../classes/vector";
+import { EQ, EQ_0, GT, LT } from "../utils/utils";
 
-"use strict";
+namespace Intersection {
+  export namespace Line {
+    export function toLine(a: Line, b: Line) {
+      let intersections = [];
 
-import Flatten from "..";
+      let [A1, B1, C1] = a.standard;
+      let [A2, B2, C2] = b.standard;
 
-export function intersectLine2Line(line1, line2) {
-  let ip = [];
+      /* Cramer's rule */
+      let det = A1 * B2 - B1 * A2;
+      let detX = C1 * B2 - B1 * C2;
+      let detY = A1 * C2 - C1 * A2;
 
-  let [A1, B1, C1] = line1.standard;
-  let [A2, B2, C2] = line2.standard;
+      if (!EQ_0(det)) {
+        let x, y;
 
-  /* Cramer's rule */
-  let det = A1 * B2 - B1 * A2;
-  let detX = C1 * B2 - B1 * C2;
-  let detY = A1 * C2 - C1 * A2;
+        if (B1 === 0) {
+          // vertical line x  = C1/A1, where A1 == +1 or -1
+          x = C1 / A1;
+          y = detY / det;
+        } else if (B2 === 0) {
+          // vertical line x = C2/A2, where A2 = +1 or -1
+          x = C2 / A2;
+          y = detY / det;
+        } else if (A1 === 0) {
+          // horizontal line y = C1/B1, where B1 = +1 or -1
+          x = detX / det;
+          y = C1 / B1;
+        } else if (A2 === 0) {
+          // horizontal line y = C2/B2, where B2 = +1 or -1
+          x = detX / det;
+          y = C2 / B2;
+        } else {
+          x = detX / det;
+          y = detY / det;
+        }
 
-  if (!Flatten.Utils.EQ_0(det)) {
-    let x, y;
-
-    if (B1 === 0) {
-      // vertical line x  = C1/A1, where A1 == +1 or -1
-      x = C1 / A1;
-      y = detY / det;
-    } else if (B2 === 0) {
-      // vertical line x = C2/A2, where A2 = +1 or -1
-      x = C2 / A2;
-      y = detY / det;
-    } else if (A1 === 0) {
-      // horizontal line y = C1/B1, where B1 = +1 or -1
-      x = detX / det;
-      y = C1 / B1;
-    } else if (A2 === 0) {
-      // horizontal line y = C2/B2, where B2 = +1 or -1
-      x = detX / det;
-      y = C2 / B2;
-    } else {
-      x = detX / det;
-      y = detY / det;
-    }
-
-    ip.push(new Flatten.Point(x, y));
-  }
-
-  return ip;
-}
-
-export function intersectLine2Circle(line, circle) {
-  let ip = [];
-  let prj = circle.pc.projectionOn(line); // projection of circle center on line
-  let dist = circle.pc.distanceTo(prj)[0]; // distance from circle center to projection
-
-  if (Flatten.Utils.EQ(dist, circle.r)) {
-    // line tangent to circle - return single intersection point
-    ip.push(prj);
-  } else if (Flatten.Utils.LT(dist, circle.r)) {
-    // return two intersection points
-    let delta = Math.sqrt(circle.r * circle.r - dist * dist);
-    let v_trans, pt;
-
-    v_trans = line.norm.rotate90CCW().multiply(delta);
-    pt = prj.translate(v_trans);
-    ip.push(pt);
-
-    v_trans = line.norm.rotate90CW().multiply(delta);
-    pt = prj.translate(v_trans);
-    ip.push(pt);
-  }
-  return ip;
-}
-
-export function intersectLine2Box(line, box) {
-  let ips = [];
-  for (let seg of box.toSegments()) {
-    let ips_tmp = intersectSegment2Line(seg, line);
-    for (let pt of ips_tmp) {
-      if (!ptInIntPoints(pt, ips)) {
-        ips.push(pt);
+        intersections.push(new Vector(x, y));
       }
+
+      return intersections;
     }
+
+    export const toCircle = (line: Line, circle: Circle) => {
+      let ip = [];
+      let prj = circle.pc.projectionOn(line); // projection of circle center on line
+      let dist = circle.pc.distanceTo(prj)[0]; // distance from circle center to projection
+
+      if (EQ(dist, circle.r)) {
+        // line tangent to circle - return single intersection point
+        ip.push(prj);
+      } else if (LT(dist, circle.r)) {
+        // return two intersection points
+        let delta = Math.sqrt(circle.r * circle.r - dist * dist);
+        let v_trans, pt;
+
+        v_trans = line.norm.rotate90CCW().multiply(delta);
+        pt = prj.translate(v_trans);
+        ip.push(pt);
+
+        v_trans = line.norm.rotate90CW().multiply(delta);
+        pt = prj.translate(v_trans);
+        ip.push(pt);
+      }
+      return ip;
+    };
+
+    export const toBox = (line: Line, box: Box) => {
+      let intersections = [];
+      for (let seg of box.toSegments()) {
+        let intersections_tmp = segment2Line(seg, line);
+        for (let pt of intersections_tmp) {
+          if (!ptInIntPoints(pt, intersections)) {
+            intersections.push(pt);
+          }
+        }
+      }
+      return intersections;
+    };
+
+    export const toArc = (line: Line, arc: Arc) => {
+      let intersections: Vector[] = [];
+
+      if (toBox(line, arc.box).length === 0) {
+        return intersections;
+      }
+
+      let circle = new Circle(arc.pc, arc.r);
+      let ip_tmp = toCircle(line, circle);
+      for (let pt of ip_tmp) {
+        if (pt.on(arc)) {
+          intersections.push(pt);
+        }
+      }
+
+      return intersections;
+    };
   }
-  return ips;
 }
 
-export function intersectLine2Arc(line, arc) {
-  let ip = [];
-
-  if (intersectLine2Box(line, arc.box).length === 0) {
-    return ip;
-  }
-
-  let circle = new Flatten.Circle(arc.pc, arc.r);
-  let ip_tmp = intersectLine2Circle(line, circle);
-  for (let pt of ip_tmp) {
-    if (pt.on(arc)) {
-      ip.push(pt);
-    }
-  }
-
-  return ip;
-}
-
-export function intersectSegment2Line(seg, line) {
+export function segment2Line(seg: Segment, line: Line) {
   let ip = [];
 
   // Boundary cases
@@ -131,59 +131,59 @@ export function intersectSegment2Line(seg, line) {
   }
 
   // Calculate intersection between lines
-  let line1 = new Flatten.Line(seg.ps, seg.pe);
-  return intersectLine2Line(line1, line);
+  let line1 = new Line(seg.ps, seg.pe);
+  return line2Line(line1, line);
 }
 
-export function intersectSegment2Segment(seg1, seg2) {
-  let ip = [];
+export function segment2Segment(a: Segment, b: Segment) {
+  let intersections: Vector[] = [];
 
   // quick reject
-  if (seg1.box.not_intersect(seg2.box)) {
-    return ip;
+  if (a.box.not_intersect(b.box)) {
+    return intersections;
   }
 
   // Special case of seg1 zero length
-  if (seg1.isZeroLength()) {
-    if (seg1.ps.on(seg2)) {
-      ip.push(seg1.ps);
+  if (a.isZeroLength()) {
+    if (a.ps.on(b)) {
+      intersections.push(a.ps);
     }
-    return ip;
+    return intersections;
   }
 
   // Special case of seg2 zero length
-  if (seg2.isZeroLength()) {
-    if (seg2.ps.on(seg1)) {
-      ip.push(seg2.ps);
+  if (b.isZeroLength()) {
+    if (b.ps.on(a)) {
+      intersections.push(b.ps);
     }
-    return ip;
+    return intersections;
   }
 
   // Neither seg1 nor seg2 is zero length
-  let line1 = new Flatten.Line(seg1.ps, seg1.pe);
-  let line2 = new Flatten.Line(seg2.ps, seg2.pe);
+  let line1 = new Line(a.ps, a.pe);
+  let line2 = new Line(b.ps, b.pe);
 
   // Check overlapping between segments in case of incidence
   // If segments touching, add one point. If overlapping, add two points
   if (line1.incidentTo(line2)) {
-    if (seg1.ps.on(seg2)) {
-      ip.push(seg1.ps);
+    if (a.ps.on(b)) {
+      intersections.push(a.ps);
     }
-    if (seg1.pe.on(seg2)) {
-      ip.push(seg1.pe);
+    if (a.pe.on(b)) {
+      intersections.push(a.pe);
     }
-    if (seg2.ps.on(seg1) && !seg2.ps.equalTo(seg1.ps) && !seg2.ps.equalTo(seg1.pe)) {
-      ip.push(seg2.ps);
+    if (b.ps.on(a) && !b.ps.equalTo(a.ps) && !b.ps.equalTo(a.pe)) {
+      intersections.push(b.ps);
     }
-    if (seg2.pe.on(seg1) && !seg2.pe.equalTo(seg1.ps) && !seg2.pe.equalTo(seg1.pe)) {
-      ip.push(seg2.pe);
+    if (b.pe.on(a) && !b.pe.equalTo(a.ps) && !b.pe.equalTo(a.pe)) {
+      intersections.push(b.pe);
     }
   } else {
     /* not incident - parallel or intersect */
     // Calculate intersection between lines
-    let new_ip = intersectLine2Line(line1, line2);
-    if (new_ip.length > 0 && new_ip[0].on(seg1) && new_ip[0].on(seg2)) {
-      ip.push(new_ip[0]);
+    let new_ip = line2Line(line1, line2);
+    if (new_ip.length > 0 && new_ip[0].on(a) && new_ip[0].on(b)) {
+      intersections.push(new_ip[0]);
     }
 
     // Fix missing intersection
@@ -204,109 +204,95 @@ export function intersectSegment2Segment(seg1, seg2) {
     // }
   }
 
-  return ip;
+  return intersections;
 }
 
-export function intersectSegment2Circle(segment, circle) {
-  let ips = [];
+export function segment2Circle(segment: Segment, circle: Circle) {
+  let intersections: Vector[] = [];
 
   if (segment.box.not_intersect(circle.box)) {
-    return ips;
+    return intersections;
   }
 
   // Special case of zero length segment
   if (segment.isZeroLength()) {
-    let [dist, shortest_segment] = segment.ps.distanceTo(circle.pc);
-    if (Flatten.Utils.EQ(dist, circle.r)) {
-      ips.push(segment.ps);
+    let [dist, shortest_segment] = segment.start.distanceTo(circle.pc);
+    if (EQ(dist, circle.r)) {
+      intersections.push(segment.start);
     }
-    return ips;
+    return intersections;
   }
 
   // Non zero-length segment
-  let line = new Flatten.Line(segment.ps, segment.pe);
-
-  let ips_tmp = intersectLine2Circle(line, circle);
-
-  for (let ip of ips_tmp) {
-    if (ip.on(segment)) {
-      ips.push(ip);
-    }
-  }
-
-  return ips;
+  const line = new Line(segment.start, segment.end);
+  return line2Circle(line, circle).filter((point) => point.on(segment));
 }
 
-export function intersectSegment2Arc(segment, arc) {
-  let ip = [];
+export function segment2Arc(segment: Segment, arc: Arc) {
+  let intersections: Vector[] = [];
 
   if (segment.box.not_intersect(arc.box)) {
-    return ip;
+    return intersections;
   }
 
   // Special case of zero-length segment
   if (segment.isZeroLength()) {
-    if (segment.ps.on(arc)) {
-      ip.push(segment.ps);
-    }
-    return ip;
+    return segment.start.on(arc) ? [segment.start] : [];
   }
 
   // Non-zero length segment
-  let line = new Flatten.Line(segment.ps, segment.pe);
-  let circle = new Flatten.Circle(arc.pc, arc.r);
+  let line = new Line(segment.ps, segment.pe);
+  let circle = new Circle(arc.pc, arc.r);
 
   let ip_tmp = intersectLine2Circle(line, circle);
 
   for (let pt of ip_tmp) {
     if (pt.on(segment) && pt.on(arc)) {
-      ip.push(pt);
+      intersections.push(pt);
     }
   }
-  return ip;
+  return intersections;
 }
 
-export function intersectSegment2Box(segment, box) {
-  let ips = [];
+export function intersectSegment2Box(segment: Segment, box: Box) {
+  let intersections = [];
   for (let seg of box.toSegments()) {
-    let ips_tmp = intersectSegment2Segment(seg, segment);
-    for (let ip of ips_tmp) {
-      ips.push(ip);
+    let intersections_tmp = segment2Segment(seg, segment);
+    for (let ip of intersections_tmp) {
+      intersections.push(ip);
     }
   }
-  return ips;
+  return intersections;
 }
 
-export function intersectCircle2Circle(circle1, circle2) {
-  let ip = [];
+export function intersectCircle2Circle(circle1: Circle, circle2: Circle) {
+  let intersections: Vector[] = [];
 
   if (circle1.box.not_intersect(circle2.box)) {
-    return ip;
+    return intersections;
   }
 
-  let vec = new Flatten.Vector(circle1.pc, circle2.pc);
+  let vec = new Vector(circle1.pc, circle2.pc);
 
   let r1 = circle1.r;
   let r2 = circle2.r;
 
   // Degenerated circle
-  if (Flatten.Utils.EQ_0(r1) || Flatten.Utils.EQ_0(r2)) return ip;
+  if (EQ_0(r1) || EQ_0(r2)) return intersections;
 
   // In case of equal circles return one leftmost point
-  if (Flatten.Utils.EQ_0(vec.x) && Flatten.Utils.EQ_0(vec.y) && Flatten.Utils.EQ(r1, r2)) {
-    ip.push(circle1.pc.translate(-r1, 0));
-    return ip;
+  if (EQ_0(vec.x) && EQ_0(vec.y) && EQ(r1, r2)) {
+    intersections.push(circle1.pc.translate(-r1, 0));
+    return intersections;
   }
 
   let dist = circle1.pc.distanceTo(circle2.pc)[0];
 
-  if (Flatten.Utils.GT(dist, r1 + r2))
-    // circles too far, no intersections
-    return ip;
+  // circles too far, no intersections
+  if (GT(dist, r1 + r2)) return intersections;
 
-  if (Flatten.Utils.LT(dist, Math.abs(r1 - r2)))
-    // one circle is contained within another, no intersections
-    return ip;
+  // one circle is contained within another, no intersections
+  if (LT(dist, Math.abs(r1 - r2))) return intersections;
 
   // Normalize vector.
   vec.x /= dist;
@@ -316,10 +302,10 @@ export function intersectCircle2Circle(circle1, circle2) {
 
   // Case of touching from outside or from inside - single intersection point
   // TODO: check this specifically not sure if correct
-  if (Flatten.Utils.EQ(dist, r1 + r2) || Flatten.Utils.EQ(dist, Math.abs(r1 - r2))) {
+  if (EQ(dist, r1 + r2) || EQ(dist, Math.abs(r1 - r2))) {
     pt = circle1.pc.translate(r1 * vec.x, r1 * vec.y);
-    ip.push(pt);
-    return ip;
+    intersections.push(pt);
+    return intersections;
   }
 
   // Case of two intersection points
@@ -335,63 +321,61 @@ export function intersectCircle2Circle(circle1, circle2) {
 
   // norm = vec.rotate90CCW().multiply(h);
   pt = mid_pt.translate(vec.rotate90CCW().multiply(h));
-  ip.push(pt);
+  intersections.push(pt);
 
   // norm = vec.rotate90CW();
   pt = mid_pt.translate(vec.rotate90CW().multiply(h));
-  ip.push(pt);
+  intersections.push(pt);
 
-  return ip;
+  return intersections;
 }
 
-export function intersectCircle2Box(circle, box) {
-  let ips = [];
-  for (let seg of box.toSegments()) {
-    let ips_tmp = intersectSegment2Circle(seg, circle);
-    for (let ip of ips_tmp) {
-      ips.push(ip);
+export function intersectCircle2Box(circle: Circle, box: Box) {
+  const intersections: Vector[] = [];
+  for (const seg of box.toSegments()) {
+    let intersections_tmp = segment2Circle(seg, circle);
+    for (const ip of intersections_tmp) {
+      intersections.push(ip);
     }
   }
-  return ips;
+  return intersections;
 }
 
-export function intersectArc2Arc(arc1, arc2) {
-  var ip = [];
+export function intersectArc2Arc(a: Arc, b: Arc) {
+  const intersections: Vector[] = [];
 
-  if (arc1.box.not_intersect(arc2.box)) {
-    return ip;
-  }
+  if (a.box.not_intersect(b.box)) return intersections;
 
   // Special case: overlapping arcs
   // May return up to 4 intersection points
-  if (arc1.pc.equalTo(arc2.pc) && Flatten.Utils.EQ(arc1.r, arc2.r)) {
+  if (a.pc.equalTo(b.pc) && EQ(a.r, b.r)) {
     let pt;
 
-    pt = arc1.start;
-    if (pt.on(arc2)) ip.push(pt);
+    pt = a.start;
+    if (pt.on(b)) intersections.push(pt);
 
-    pt = arc1.end;
-    if (pt.on(arc2)) ip.push(pt);
+    pt = a.end;
+    if (pt.on(b)) intersections.push(pt);
 
-    pt = arc2.start;
-    if (pt.on(arc1)) ip.push(pt);
+    pt = b.start;
+    if (pt.on(a)) intersections.push(pt);
 
-    pt = arc2.end;
-    if (pt.on(arc1)) ip.push(pt);
+    pt = b.end;
+    if (pt.on(a)) intersections.push(pt);
 
-    return ip;
+    return intersections;
   }
 
   // Common case
-  let circle1 = new Flatten.Circle(arc1.pc, arc1.r);
-  let circle2 = new Flatten.Circle(arc2.pc, arc2.r);
+  let circle1 = new Circle(a.pc, a.r);
+  let circle2 = new Circle(b.pc, b.r);
   let ip_tmp = circle1.intersect(circle2);
   for (let pt of ip_tmp) {
-    if (pt.on(arc1) && pt.on(arc2)) {
-      ip.push(pt);
+    if (pt.on(a) && pt.on(b)) {
+      intersections.push(pt);
     }
   }
-  return ip;
+  return intersections;
 }
 
 export function intersectArc2Circle(arc, circle) {
@@ -422,30 +406,30 @@ export function intersectArc2Circle(arc, circle) {
 }
 
 export function intersectArc2Box(arc, box) {
-  let ips = [];
+  let intersections = [];
   for (let seg of box.toSegments()) {
-    let ips_tmp = intersectSegment2Arc(seg, arc);
-    for (let ip of ips_tmp) {
-      ips.push(ip);
+    let intersections_tmp = segment2Arc(seg, arc);
+    for (let ip of intersections_tmp) {
+      intersections.push(ip);
     }
   }
-  return ips;
+  return intersections;
 }
 
 export function intersectEdge2Segment(edge, segment) {
-  return edge.isSegment() ? intersectSegment2Segment(edge.shape, segment) : intersectSegment2Arc(segment, edge.shape);
+  return edge.isSegment() ? segment2Segment(edge.shape, segment) : segment2Arc(segment, edge.shape);
 }
 
 export function intersectEdge2Arc(edge, arc) {
-  return edge.isSegment() ? intersectSegment2Arc(edge.shape, arc) : intersectArc2Arc(edge.shape, arc);
+  return edge.isSegment() ? segment2Arc(edge.shape, arc) : intersectArc2Arc(edge.shape, arc);
 }
 
 export function intersectEdge2Line(edge, line) {
-  return edge.isSegment() ? intersectSegment2Line(edge.shape, line) : intersectLine2Arc(line, edge.shape);
+  return edge.isSegment() ? segment2Line(edge.shape, line) : line2Arc(line, edge.shape);
 }
 
 export function intersectEdge2Circle(edge, circle) {
-  return edge.isSegment() ? intersectSegment2Circle(edge.shape, circle) : intersectArc2Circle(edge.shape, circle);
+  return edge.isSegment() ? segment2Circle(edge.shape, circle) : intersectArc2Circle(edge.shape, circle);
 }
 
 export function intersectSegment2Polygon(segment, polygon) {
@@ -511,10 +495,10 @@ export function intersectEdge2Edge(edge1, edge2) {
   const shape2 = edge2.shape;
   return edge1.isSegment()
     ? edge2.isSegment()
-      ? intersectSegment2Segment(shape1, shape2)
-      : intersectSegment2Arc(shape1, shape2)
+      ? segment2Segment(shape1, shape2)
+      : segment2Arc(shape1, shape2)
     : edge2.isSegment()
-    ? intersectSegment2Arc(shape2, shape1)
+    ? segment2Arc(shape2, shape1)
     : intersectArc2Arc(shape1, shape2);
 }
 
@@ -576,7 +560,7 @@ export function intersectBox2Box(box1, box2) {
   let ip = [];
   for (let segment1 of box1.toSegments()) {
     for (let segment2 of box2.toSegments()) {
-      for (let pt of intersectSegment2Segment(segment1, segment2)) {
+      for (let pt of segment2Segment(segment1, segment2)) {
         ip.push(pt);
       }
     }
