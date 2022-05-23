@@ -1,4 +1,15 @@
-import * as Intersection from "../algorithms/intersection";
+import { Shape } from "..";
+import {
+  line2Arc,
+  line2Box,
+  intersectLine2Circle,
+  line2Line,
+  intersectLine2Polygon,
+  segment2Line,
+} from "../algorithms/intersection";
+import Errors from "../utils/errors";
+import { EQ_0 } from "../utils/utils";
+import { Point } from "./point";
 import { Vector } from "./vector";
 
 export class Line {
@@ -24,18 +35,18 @@ export class Line {
       let a1 = args[0];
       let a2 = args[1];
 
-      if (a1 instanceof Flatten.Point && a2 instanceof Flatten.Point) {
+      if (a1 instanceof Point && a2 instanceof Point) {
         this.pt = a1;
         this.norm = Line.points2norm(a1, a2);
-        if (this.norm.dot(vector(this.pt.x, this.pt.y)) >= 0) {
+        if (this.norm.dot(new Vector(this.pt.x, this.pt.y)) >= 0) {
           this.norm.invert();
         }
         return;
       }
 
-      if (a1 instanceof Flatten.Point && a2 instanceof Flatten.Vector) {
-        if (Flatten.Utils.EQ_0(a2.x) && Flatten.Utils.EQ_0(a2.y)) {
-          throw Flatten.Errors.ILLEGAL_PARAMETERS;
+      if (a1 instanceof Point && a2 instanceof Vector) {
+        if (EQ_0(a2.x) && EQ_0(a2.y)) {
+          throw Errors.ILLEGAL_PARAMETERS;
         }
         this.pt = a1.clone();
         this.norm = a2.clone();
@@ -46,61 +57,45 @@ export class Line {
         return;
       }
 
-      if (a1 instanceof Flatten.Vector && a2 instanceof Flatten.Point) {
-        if (Flatten.Utils.EQ_0(a1.x) && Flatten.Utils.EQ_0(a1.y)) {
-          throw Flatten.Errors.ILLEGAL_PARAMETERS;
+      if (a1 instanceof Vector && a2 instanceof Point) {
+        if (EQ_0(a1.x) && EQ_0(a1.y)) {
+          throw Errors.ILLEGAL_PARAMETERS;
         }
         this.pt = a2.clone();
         this.norm = a1.clone();
         this.norm = this.norm.normalize();
-        if (this.norm.dot(vector(this.pt.x, this.pt.y)) >= 0) {
+        if (this.norm.dot(new Vector(this.pt.x, this.pt.y)) >= 0) {
           this.norm.invert();
         }
         return;
       }
     }
-
-    throw Flatten.Errors.ILLEGAL_PARAMETERS;
   }
 
-  /**
-   * Return new cloned instance of line
-   * @returns {Line}
-   */
+  /** Return new cloned instance of line */
   clone() {
-    return new Flatten.Line(this.pt, this.norm);
+    return new Line(this.pt, this.norm);
   }
 
-  /* The following methods need for implementation of Edge interface
-    /**
-     * Line has no start point
-     * @returns {undefined}
-     */
+  // The following methods need for implementation of Edge interface
+  /** Line has no start point */
   get start() {
     return undefined;
   }
 
-  /**
-   * Line has no end point
-   */
+  /** Line has no end point */
   get end() {
     return undefined;
   }
 
-  /**
-   * Return positive infinity number as length
-   * @returns {number}
-   */
+  /** Return positive infinity number as length */
   get length() {
     return Number.POSITIVE_INFINITY;
   }
 
-  /**
-   * Returns infinite box
-   * @returns {Box}
-   */
+  /** Returns infinite box */
   get box() {
-    return new Flatten.Box(
+    return new Box(
       Number.NEGATIVE_INFINITY,
       Number.NEGATIVE_INFINITY,
       Number.POSITIVE_INFINITY,
@@ -108,66 +103,44 @@ export class Line {
     );
   }
 
-  /**
-   * Middle point is undefined
-   * @returns {undefined}
-   */
+  /** Middle point is undefined */
   get middle() {
     return undefined;
   }
 
-  /**
-   * Slope of the line - angle in radians between line and axe x from 0 to 2PI
-   * @returns {number} - slope of the line
-   */
+  /** Slope of the line - angle in radians between line and axe x from 0 to 2PI */
   get slope() {
-    let vec = new Flatten.Vector(this.norm.y, -this.norm.x);
+    let vec = new Vector(this.norm.y, -this.norm.x);
     return vec.slope;
   }
 
-  /**
-   * Get coefficients [A,B,C] of a standard line equation in the form Ax + By = C
-   * @code [A, B, C] = line.standard
-   * @returns {number[]} - array of coefficients
-   */
-  get standard() {
-    let A = this.norm.x;
-    let B = this.norm.y;
-    let C = this.norm.dot(this.pt);
-
-    return [A, B, C];
+  /** Get coefficients [A,B,C] of a standard line equation in the form Ax + By = C */
+  get standard(): [number, number, number] {
+    return [this.norm.x, this.norm.y, this.norm.dot(this.pt)];
   }
 
   /**
    * Return true if parallel or incident to other line
-   * @param {Line} other_line - line to check
+   * @param {Line} line - line to check
    * @returns {boolean}
    */
-  parallelTo(other_line) {
-    return Flatten.Utils.EQ_0(this.norm.cross(other_line.norm));
+  parallelTo(line: Line) {
+    return EQ_0(this.norm.cross(line.norm));
   }
 
-  /**
-   * Returns true if incident to other line
-   * @param {Line} other_line - line to check
-   * @returns {boolean}
-   */
-  incidentTo(other_line) {
-    return this.parallelTo(other_line) && this.pt.on(other_line);
+  /** Returns true if incident to other line */
+  incidentTo(line: Line) {
+    return this.parallelTo(line) && this.pt.on(line);
   }
 
-  /**
-   * Returns true if point belongs to line
-   * @param {Point} pt Query point
-   * @returns {boolean}
-   */
-  contains(pt) {
+  /** Returns true if point belongs to line */
+  contains(pt: Vector) {
     if (this.pt.equalTo(pt)) {
       return true;
     }
     /* Line contains point if vector to point is orthogonal to the line normal vector */
-    let vec = new Flatten.Vector(this.pt, pt);
-    return Flatten.Utils.EQ_0(this.norm.dot(vec));
+    const vec = new Vector(this.pt, pt);
+    return EQ_0(this.norm.dot(vec));
   }
 
   /**
@@ -176,44 +149,39 @@ export class Line {
    * the line and axe y is collinear to the normal vector. <br/>
    * This method assumes that point lays on the line and does not check it
    * @param {Point} pt - point on line
-   * @returns {number}
    */
-  coord(pt) {
-    return vector(pt.x, pt.y).cross(this.norm);
+  coord(pt: Vector) {
+    return pt.cross(this.norm);
   }
 
-  /**
-   * Returns array of intersection points
-   * @param {Shape} shape - shape to intersect with
-   * @returns {Point[]}
-   */
-  intersect(shape) {
-    if (shape instanceof Flatten.Point) {
+  /** Returns array of intersection points **/
+  intersect(shape: Shape) {
+    if (shape instanceof Vector) {
       return this.contains(shape) ? [shape] : [];
     }
 
-    if (shape instanceof Flatten.Line) {
-      return Intersection.intersectLine2Line(this, shape);
+    if (shape instanceof Line) {
+      return line2Line(this, shape);
     }
 
-    if (shape instanceof Flatten.Circle) {
-      return Intersection.intersectLine2Circle(this, shape);
+    if (shape instanceof Circle) {
+      return intersectLine2Circle(this, shape);
     }
 
-    if (shape instanceof Flatten.Box) {
-      return Intersection.intersectLine2Box(this, shape);
+    if (shape instanceof Box) {
+      return line2Box(this, shape);
     }
 
-    if (shape instanceof Flatten.Segment) {
-      return Intersection.intersectSegment2Line(shape, this);
+    if (shape instanceof Segment) {
+      return segment2Line(shape, this);
     }
 
-    if (shape instanceof Flatten.Arc) {
-      return Intersection.intersectLine2Arc(this, shape);
+    if (shape instanceof Arc) {
+      return line2Arc(this, shape);
     }
 
-    if (shape instanceof Flatten.Polygon) {
-      return Intersection.intersectLine2Polygon(this, shape);
+    if (shape instanceof Polygon) {
+      return intersectLine2Polygon(this, shape);
     }
   }
 
@@ -223,31 +191,31 @@ export class Line {
    * @returns {Number}
    * @returns {Segment}
    */
-  distanceTo(shape) {
-    if (shape instanceof Flatten.Point) {
-      let [distance, shortest_segment] = Flatten.Distance.point2line(shape, this);
+  distanceTo(shape: Shape) {
+    if (shape instanceof Vector) {
+      let [distance, shortest_segment] = Distance.point2line(shape, this);
       shortest_segment = shortest_segment.reverse();
       return [distance, shortest_segment];
     }
 
-    if (shape instanceof Flatten.Circle) {
-      let [distance, shortest_segment] = Flatten.Distance.circle2line(shape, this);
+    if (shape instanceof Circle) {
+      let [distance, shortest_segment] = Distance.circle2line(shape, this);
       shortest_segment = shortest_segment.reverse();
       return [distance, shortest_segment];
     }
 
-    if (shape instanceof Flatten.Segment) {
-      let [distance, shortest_segment] = Flatten.Distance.segment2line(shape, this);
+    if (shape instanceof Segment) {
+      let [distance, shortest_segment] = Distance.segment2line(shape, this);
       return [distance, shortest_segment.reverse()];
     }
 
-    if (shape instanceof Flatten.Arc) {
-      let [distance, shortest_segment] = Flatten.Distance.arc2line(shape, this);
+    if (shape instanceof Arc) {
+      let [distance, shortest_segment] = Distance.arc2line(shape, this);
       return [distance, shortest_segment.reverse()];
     }
 
-    if (shape instanceof Flatten.Polygon) {
-      let [distance, shortest_segment] = Flatten.Distance.shape2polygon(this, shape);
+    if (shape instanceof Polygon) {
+      let [distance, shortest_segment] = Distance.shape2polygon(this, shape);
       return [distance, shortest_segment];
     }
   }
@@ -255,15 +223,13 @@ export class Line {
   /**
    * Split line with array of points and return array of shapes
    * Assumed that all points lay on the line
-   * @param {Point[]}
-   * @returns {Shape[]}
    */
-  split(pt) {
-    if (pt instanceof Flatten.Point) {
-      return [new Flatten.Ray(pt, this.norm.invert()), new Flatten.Ray(pt, this.norm)];
+  split(points: Vector[]) {
+    if (points.length === 1) {
+      return [new Ray(points[0], this.norm.invert()), new Ray(points[0], this.norm)];
     } else {
-      let multiline = new Flatten.Multiline([this]);
-      let sorted_points = this.sortPoints(pt);
+      let multiline = new Multiline([this]);
+      let sorted_points = this.sortPoints(points);
       multiline.split(sorted_points);
       return multiline.toShapes();
     }
@@ -272,11 +238,9 @@ export class Line {
   /**
    * Sort given array of points that lay on line with respect to coordinate on a line
    * The method assumes that points lay on the line and does not check this
-   * @param {Point[]} pts - array of points
-   * @returns {Point[]} new array sorted
    */
-  sortPoints(pts) {
-    return pts.slice().sort((pt1, pt2) => {
+  sortPoints(points: Vector[]) {
+    return points.slice().sort((pt1, pt2) => {
       if (this.coord(pt1) < this.coord(pt2)) {
         return -1;
       }
@@ -290,7 +254,6 @@ export class Line {
   /**
    * This method returns an object that defines how data will be
    * serialized when called JSON.stringify() method
-   * @returns {Object}
    */
   toJSON() {
     return Object.assign({}, this, { name: "line" });
@@ -298,33 +261,20 @@ export class Line {
 
   /**
    * Return string to draw svg segment representing line inside given box
-   * @param {Box} box Box representing drawing area
-   * @param {Object} attrs - an object with attributes of svg circle element
    */
-  svg(box, attrs = {}) {
-    let ip = Intersection.intersectLine2Box(this, box);
-    if (ip.length === 0) return "";
-    let ps = ip[0];
-    let pe = ip.length == 2 ? ip[1] : ip.find((pt) => !pt.equalTo(ps));
-    if (pe === undefined) pe = ps;
-    let segment = new Flatten.Segment(ps, pe);
+  svg(box: Box, attrs = {}) {
+    const intersection = line2Box(this, box);
+    if (intersection.length === 0) return "";
+    const start = intersection[0];
+    const end = (intersection.length == 2 ? intersection[1] : intersection.find((pt) => !pt.equalTo(start))) ?? start;
+    const segment = new Segment(start, end);
     return segment.svg(attrs);
   }
 
-  static points2norm(pt1, pt2) {
-    if (pt1.equalTo(pt2)) {
-      throw Flatten.Errors.ILLEGAL_PARAMETERS;
-    }
-    let vec = new Flatten.Vector(pt1, pt2);
-    let unit = vec.normalize();
+  static points2norm(a: Vector, b: Vector) {
+    if (a.equalTo(b)) throw Errors.ILLEGAL_PARAMETERS;
+    const vec = new Vector(a, b);
+    const unit = vec.normalize();
     return unit.rotate90CCW();
   }
 }
-
-Flatten.Line = Line;
-/**
- * Function to create line equivalent to "new" constructor
- * @param args
- */
-export const line = (...args) => new Flatten.Line(...args);
-Flatten.line = line;
