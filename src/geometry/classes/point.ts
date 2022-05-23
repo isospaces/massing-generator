@@ -215,7 +215,7 @@ export class Point {
    * @returns {String}
    */
   svg(attrs = {}) {
-    let { r, stroke, strokeWidth, fill, id, className } = attrs;
+    const { r, stroke, strokeWidth, fill, id, className } = attrs;
     // let rest_str = Object.keys(rest).reduce( (acc, key) => acc += ` ${key}="${rest[key]}"`, "");
     let id_str = id && id.length > 0 ? `id="${id}"` : "";
     let class_str = className && className.length > 0 ? `class="${className}"` : "";
@@ -225,12 +225,5 @@ export class Point {
   }
 }
 
-Flatten.Point = Point;
-/**
- * Function to create point equivalent to "new" constructor
- * @param args
- */
-export const point = (...args) => new Flatten.Point(...args);
-Flatten.point = point;
-
-// export {Point};
+/** Function to create point equivalent to "new" constructor */
+export const point = (...args: any) => new Point(...args);
