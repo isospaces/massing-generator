@@ -130,7 +130,7 @@ export class Box {
    * Defaults are stroke:"black", strokeWidth:"1", fill:"none"
    */
   svg(attrs = {}) {
-    const { stroke, strokeWidth, fill, id, className } = attrs;
+    const { stroke, strokeWidth, fill, id, className } = attrs as any;
     // let rest_str = Object.keys(rest).reduce( (acc, key) => acc += ` ${key}="${rest[key]}"`, "");
     let id_str = id && id.length > 0 ? `id="${id}"` : "";
     let class_str = className && className.length > 0 ? `class="${className}"` : "";
