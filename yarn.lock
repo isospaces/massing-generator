@@ -7,18 +7,6 @@
   resolved "https://registry.npmjs.org/@babel/parser/-/parser-7.17.10.tgz"
   integrity sha512-n2Q6i+fnJqzOaq2VkdXxy2TCPCWQZHiCo0XqmrCvDWcZQKRyZzYi4Z0yxlBuN0w+r2ZHmre+Q087DSrw3pbJDQ==
 
-"@flatten-js/core@^1.3.4":
-  version "1.3.4"
-  resolved "https://registry.npmjs.org/@flatten-js/core/-/core-1.3.4.tgz"
-  integrity sha512-VP8VYWMJPZDgNze83iS//sHHkQREtgtZ9VLn9SNX99FN49AIP/QhSeqkpW0/VPyFrUbrmkw8VumYkT09BH5bYg==
-  dependencies:
-    "@flatten-js/interval-tree" "^1.0.15"
-
-"@flatten-js/interval-tree@^1.0.15":
-  version "1.0.18"
-  resolved "https://registry.npmjs.org/@flatten-js/interval-tree/-/interval-tree-1.0.18.tgz"
-  integrity sha512-o72sZErW0Y1C82Cg7nk82ojJ/22EtmKyp5I3eNqgcOKFp/VCzetATYYjJIqOBBaR7FQ/MFj/ZpsmP38mL4TkYA==
-
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.npmjs.org/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz"

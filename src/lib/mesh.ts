@@ -1,37 +1,123 @@
-import GEO from "@flatten-js/core";
-const { vector, point } = GEO;
+import Vec2 from "./vec2";
+import { intersectsPolygon } from "./collision";
 
-export interface MeshOptions {
-  name: string;
-  strokeColor: string;
-  fillColor: string;
-  fill: boolean;
-  position: GEO.Point;
-  rotation: number;
+export class Mesh {
+  public name = "Mesh";
+  public strokeColor = "#000";
+  public fillColor = "#888";
+  public fill = true;
+  private _shape: Vec2[];
+  private _position = new Vec2(0, 0);
+  private _rotation = 0;
+  private _shapeWorld: Vec2[] = [];
+
+  constructor(shape: Vec2[]) {
+    this._shape = shape;
+    this._shapeWorld = shape;
+    this.updateWorldPosition();
+  }
+
+  public get shape() {
+    return this._shape;
+  }
+
+  public get shapeWorld() {
+    return this._shapeWorld;
+  }
+
+  public get position() {
+    return this._position;
+  }
+
+  public get rotation() {
+    return this._rotation;
+  }
+
+  public set shape(value) {
+    this.setShape(value);
+  }
+
+  public set position(value) {
+    this.setPosition(value);
+  }
+
+  public set rotation(value) {
+    this.setRotation(value);
+  }
+
+  public translatePoint(index: number, value: Vec2) {
+    this._shape[index] = this._shape[index].add(value);
+    this.updateWorldPosition();
+    return this;
+  }
+
+  public setName(value: string) {
+    this.name = value;
+    return this;
+  }
+
+  public setShape(value: Vec2[]) {
+    this._shape = value;
+    this.updateWorldPosition();
+    return this;
+  }
+
+  public setPosition(value: Vec2) {
+    this._position = value;
+    this.updateWorldPosition();
+    return this;
+  }
+
+  public setRotation(value: number) {
+    this._rotation = value;
+    this.updateWorldPosition();
+    return this;
+  }
+
+  public setStrokeColor(value: string) {
+    this.strokeColor = value;
+    return this;
+  }
+
+  public setFillColor(value: string) {
+    this.fillColor = value;
+    return this;
+  }
+
+  public translate(value: Vec2) {
+    this.position = this._position.add(value);
+  }
+
+  public intersects(...units: this[]) {
+    return units.every((u) => intersectsPolygon(this._shapeWorld, u.shapeWorld));
+  }
+
+  public get area() {
+    let a = 0; // Accumulates area
+    const points = this.shapeWorld;
+    let j = points.length - 1;
+
+    for (let i = 0; i < points.length; i++) {
+      const prev = points[j];
+      const current = points[i];
+      a += (prev.x + current.x) * (prev.y - current.y);
+      j = i;
+    }
+    return a / 2;
+  }
+
+  protected updateWorldPosition() {
+    this._shapeWorld = this.shape.map((p) => {
+      let position = p.clone();
+      if (this.rotation !== 0) {
+        const [x, y] = position;
+        const radians = this.rotation;
+        const cos = Math.cos(radians);
+        const sin = Math.sin(radians);
+        position = new Vec2(cos * x + sin * y, cos * y - sin * x);
+      }
+
+      return position.add(this.position);
+    });
+  }
 }
-
-export interface Mesh extends MeshOptions {
-  poly: GEO.Polygon;
-  toWorld(): GEO.Point[];
-  translateVertex(index: number, value: GEO.Vector): void;
-}
-
-export const mesh = (poly: GEO.Polygon, options?: Partial<MeshOptions>): Mesh => ({
-  ...{
-    name: "Mesh",
-    strokeColor: "#000",
-    fillColor: "#888",
-    fill: true,
-    poly,
-    position: point(),
-    rotation: 0,
-    toWorld() {
-      return this.poly.vertices.map((p) => p.rotate(this.rotation).translate(vector(this.position.x, this.position.y)));
-    },
-    translateVertex(index: number, value: GEO.Vector) {
-      this.poly.vertices[index] = this.poly.vertices[index].translate(value);
-      return this;
-    },
-  },
-  ...options,
-});
