@@ -1,49 +1,36 @@
-/**
- * @module RayShoot
- */
-"use strict";
-import Flatten from "..";
-import * as Utils from "../utils/utils";
-import * as Constants from "../utils/constants";
-/**
- * Implements ray shooting algorithm. Returns relation between point and polygon: inside, outside or boundary
- * @param {Polygon} polygon - polygon to test
- * @param {Point} point - point to test
- * @returns {INSIDE|OUTSIDE|BOUNDARY}
- */
-export function ray_shoot(polygon, point) {
+import { Polygon } from "../classes/polygon";
+import { Vector } from "../classes/vector";
+import { Inclusion } from "../utils/constants";
+import { Line } from "../classes/line";
+import { EQ, EQ_0, GT, LT } from "../utils/utils";
+import { Box } from "../classes/bbox";
+import { Segment } from "../classes/segment";
+
+/** Implements ray shooting algorithm. Returns relation between point and polygon: inside, outside or boundary */
+export const raycast = (polygon: Polygon, point: Vector) => {
   let contains = undefined;
 
-  // 1. Quick reject
-  // if (polygon.box.not_intersect(point.box)) {
-  //     return Flatten.OUTSIDE;
-  // }
-
-  let ray = new Flatten.Ray(point);
-  let line = new Flatten.Line(ray.pt, ray.norm);
+  // 1. Quick reject using bounding boxes
+  const ray = new Ray(point);
+  const line = new Line(ray.pt, ray.norm);
 
   // 2. Locate relevant edges of the polygon
-  const searchBox = new Flatten.Box(
-    ray.box.xmin - Flatten.DP_TOL,
-    ray.box.ymin - Flatten.DP_TOL,
-    ray.box.xmax,
-    ray.box.ymax + Flatten.DP_TOL
-  );
+  const searchBox = new Box(ray.box.xmin - DP_TOL, ray.box.ymin - DP_TOL, ray.box.xmax, ray.box.ymax + DP_TOL);
 
   if (polygon.box.not_intersect(searchBox)) {
-    return Flatten.OUTSIDE;
+    return Inclusion.Outside;
   }
 
   let resp_edges = polygon.edges.search(searchBox);
 
   if (resp_edges.length == 0) {
-    return Flatten.OUTSIDE;
+    return Inclusion.Outside;
   }
 
   // 2.5 Check if boundary
   for (let edge of resp_edges) {
     if (edge.shape.contains(point)) {
-      return Flatten.BOUNDARY;
+      return Inclusion.Boundary;
     }
   }
 
@@ -53,7 +40,7 @@ export function ray_shoot(polygon, point) {
     for (let ip of ray.intersect(edge.shape)) {
       // If intersection is equal to query point then point lays on boundary
       if (ip.equalTo(point)) {
-        return Flatten.BOUNDARY;
+        return Inclusion.Boundary;
       }
 
       intersections.push({
@@ -65,10 +52,10 @@ export function ray_shoot(polygon, point) {
 
   // 4. Sort intersection in x-ascending order
   intersections.sort((i1, i2) => {
-    if (Utils.LT(i1.pt.x, i2.pt.x)) {
+    if (LT(i1.pt.x, i2.pt.x)) {
       return -1;
     }
-    if (Utils.GT(i1.pt.x, i2.pt.x)) {
+    if (GT(i1.pt.x, i2.pt.x)) {
       return 1;
     }
     return 0;
@@ -89,7 +76,7 @@ export function ray_shoot(polygon, point) {
         continue;
       }
       let prev_edge = intersection.edge.prev;
-      while (Utils.EQ_0(prev_edge.length)) {
+      while (EQ_0(prev_edge.length)) {
         prev_edge = prev_edge.prev;
       }
       let prev_tangent = prev_edge.shape.tangentInEnd();
@@ -114,7 +101,7 @@ export function ray_shoot(polygon, point) {
         continue;
       }
       let next_edge = intersection.edge.next;
-      while (Utils.EQ_0(next_edge.length)) {
+      while (EQ_0(next_edge.length)) {
         next_edge = next_edge.next;
       }
       let next_tangent = next_edge.shape.tangentInStart();
@@ -131,12 +118,12 @@ export function ray_shoot(polygon, point) {
       }
     } else {
       /* intersection point is not a coincident with a vertex */
-      if (intersection.edge.shape instanceof Flatten.Segment) {
+      if (intersection.edge.shape instanceof Segment) {
         counter++;
       } else {
         /* Check if ray does not touch the curve in the extremal (top or bottom) point */
         let box = intersection.edge.shape.box;
-        if (!(Utils.EQ(intersection.pt.y, box.ymin) || Utils.EQ(intersection.pt.y, box.ymax))) {
+        if (!(EQ(intersection.pt.y, box.ymin) || EQ(intersection.pt.y, box.ymax))) {
           counter++;
         }
       }
@@ -144,7 +131,5 @@ export function ray_shoot(polygon, point) {
   }
 
   // 6. Odd or even?
-  contains = counter % 2 == 1 ? Constants.INSIDE : Constants.OUTSIDE;
-
-  return contains;
-}
+  return counter % 2 == 1 ? Inclusion.Inside : Inclusion.Outside;
+};

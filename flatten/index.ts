@@ -1,9 +1,9 @@
-import { Box } from "./classes/box";
+import { Box } from "./classes/bbox";
 import { Line } from "./classes/line";
-import { Point } from "./classes/point";
+import { Polygon } from "./classes/polygon";
 import { Segment } from "./classes/segment";
 
-export type Shape = Point | Line | Ray | Circle | Box | Segment | Arc | Polygon;
+export type Shape = Line | Box | Segment | Polygon;
 export interface Renderable {
   svg(): string;
 }

@@ -27,6 +27,7 @@ export const intersects = (a: Line, b: Line) => {
     const y = y1 + uA * (y2 - y1);
     return [x, y];
   }
+
   return null;
 };
 

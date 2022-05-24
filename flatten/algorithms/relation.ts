@@ -3,110 +3,64 @@
     Dimensionally Extended nine-Intersection Matrix (https://en.wikipedia.org/wiki/DE-9IM)
  */
 
-/**
- * @module Relation
- */
-"use strict";
-
-import Flatten from "..";
 import DE9IM from "../data-structures/de9im";
-import {
-  intersectLine2Arc,
-  intersectLine2Box,
-  intersectLine2Circle,
-  intersectLine2Line,
-  intersectLine2Polygon,
-  intersectSegment2Line,
-  intersectPolygon2Polygon,
-  intersectShape2Polygon,
-  intersectCircle2Circle,
-} from "./intersection";
-import { Multiline } from "../classes/multiline";
-import { ray_shoot } from "./ray_shooting";
-import * as BooleanOperations from "./boolean_op";
-
-let { vector, ray, segment, arc, polygon, multiline } = Flatten;
+import { raycast } from "./raycasting";
+import * as BooleanOperations from "./boolean-operations";
+import { Shape } from "..";
+import { Line } from "../classes/line";
+import { Arc } from "../classes/arc";
+import { Box } from "../classes/bbox";
+import { Polygon } from "../classes/polygon";
+import { Segment } from "../classes/segment";
+import * as Intersection from "./intersection";
 
 /**
  * Returns true if shapes are topologically equal:  their interiors intersect and
  * no part of the interior or boundary of one geometry intersects the exterior of the other
- * @param shape1
- * @param shape2
- * @returns {boolean}
  */
-export function equal(shape1, shape2) {
-  return relate(shape1, shape2).equal();
+export function equal(a: Shape, b: Shape) {
+  return relate(a, b).equal();
+}
+
+/** Returns true if shapes have at least one point in common, same as "not disjoint" */
+export function intersect(a: Shape, b: Shape) {
+  return relate(a, b).intersect();
+}
+
+/** Returns true if shapes have at least one point in common, but their interiors do not intersect */
+export function touch(a: Shape, b: Shape) {
+  return relate(a, b).touch();
+}
+
+/** Returns true if shapes have no points in common neither in interior nor in boundary */
+export function disjoint(a: Shape, b: Shape) {
+  return !intersect(a, b);
+}
+
+/** Returns true a lies in the interior of b */
+export function inside(a: Shape, b: Shape) {
+  return relate(a, b).inside();
+}
+
+/** Returns true if every point in a lies in the interior or on the boundary of b
+ */
+export function covered(a, b) {
+  return relate(a, b).covered();
 }
 
 /**
- * Returns true if shapes have at least one point in common, same as "not disjoint"
- * @param shape1
- * @param shape2
- * @returns {boolean}
+ * Returns true a's interior contains b <br/>
+ * Same as inside(b, a)
  */
-export function intersect(shape1, shape2) {
-  return relate(shape1, shape2).intersect();
+export function contain(a, b) {
+  return inside(b, a);
 }
 
 /**
- * Returns true if shapes have at least one point in common, but their interiors do not intersect
- * @param shape1
- * @param shape2
- * @returns {boolean}
+ * Returns true a's cover b, same as b covered by a
  */
-export function touch(shape1, shape2) {
-  return relate(shape1, shape2).touch();
-}
-
-/**
- * Returns true if shapes have no points in common neither in interior nor in boundary
- * @param shape1
- * @param shape2
- * @returns {boolean}
- */
-export function disjoint(shape1, shape2) {
-  return !intersect(shape1, shape2);
-}
-
-/**
- * Returns true shape1 lies in the interior of shape2
- * @param shape1
- * @param shape2
- * @returns {boolean}
- */
-export function inside(shape1, shape2) {
-  return relate(shape1, shape2).inside();
-}
-
-/**
- * Returns true if every point in shape1 lies in the interior or on the boundary of shape2
- * @param shape1
- * @param shape2
- * @returns {boolean}
- */
-export function covered(shape1, shape2) {
-  return relate(shape1, shape2).covered();
-}
-
-/**
- * Returns true shape1's interior contains shape2 <br/>
- * Same as inside(shape2, shape1)
- * @param shape1
- * @param shape2
- * @returns {boolean}
- */
-export function contain(shape1, shape2) {
-  return inside(shape2, shape1);
-}
-
-/**
- * Returns true shape1's cover shape2, same as shape2 covered by shape1
- * @param shape1
- * @param shape2
- * @returns {boolean}
- */
-export function cover(shape1, shape2) {
-  return covered(shape2, shape1);
+export function cover(a, b) {
+  return covered(b, a);
 }
 
 /**
@@ -115,42 +69,33 @@ export function cover(shape1, shape2) {
  * If there is no intersection, element contains empty array
  * If intersection is irrelevant it left undefined. (For example, intersection
  * between two exteriors is usually irrelevant)
- * @param shape1
- * @param shape2
+ * @param a
+ * @param b
  * @returns {DE9IM}
  */
-export function relate(shape1, shape2) {
-  if (shape1 instanceof Flatten.Line && shape2 instanceof Flatten.Line) {
-    return relateLine2Line(shape1, shape2);
-  } else if (shape1 instanceof Flatten.Line && shape2 instanceof Flatten.Circle) {
-    return relateLine2Circle(shape1, shape2);
-  } else if (shape1 instanceof Flatten.Line && shape2 instanceof Flatten.Box) {
-    return relateLine2Box(shape1, shape2);
-  } else if (shape1 instanceof Flatten.Line && shape2 instanceof Flatten.Polygon) {
-    return relateLine2Polygon(shape1, shape2);
-  } else if (
-    (shape1 instanceof Flatten.Segment || shape1 instanceof Flatten.Arc) &&
-    shape2 instanceof Flatten.Polygon
-  ) {
-    return relateShape2Polygon(shape1, shape2);
-  } else if (
-    (shape1 instanceof Flatten.Segment || shape1 instanceof Flatten.Arc) &&
-    (shape2 instanceof Flatten.Circle || shape2 instanceof Flatten.Box)
-  ) {
-    return relateShape2Polygon(shape1, new Flatten.Polygon(shape2));
-  } else if (shape1 instanceof Flatten.Polygon && shape2 instanceof Flatten.Polygon) {
-    return relatePolygon2Polygon(shape1, shape2);
-  } else if (
-    (shape1 instanceof Flatten.Circle || shape1 instanceof Flatten.Box) &&
-    (shape2 instanceof Flatten.Circle || shape2 instanceof Flatten.Box)
-  ) {
-    return relatePolygon2Polygon(new Flatten.Polygon(shape1), new Flatten.Polygon(shape2));
-  } else if ((shape1 instanceof Flatten.Circle || shape1 instanceof Flatten.Box) && shape2 instanceof Flatten.Polygon) {
-    return relatePolygon2Polygon(new Flatten.Polygon(shape1), shape2);
-  } else if (shape1 instanceof Flatten.Polygon && (shape2 instanceof Flatten.Circle || shape2 instanceof Flatten.Box)) {
-    return relatePolygon2Polygon(shape1, new Flatten.Polygon(shape2));
+export const relate = (a: Shape, b: Shape) => {
+  if (a instanceof Line && b instanceof Line) {
+    return relateLine2Line(a, b);
+  } else if (a instanceof Line && b instanceof Circle) {
+    return relateLine2Circle(a, b);
+  } else if (a instanceof Line && b instanceof Box) {
+    return relateLine2Box(a, b);
+  } else if (a instanceof Line && b instanceof Polygon) {
+    return relateLine2Polygon(a, b);
+  } else if ((a instanceof Segment || a instanceof Arc) && b instanceof Polygon) {
+    return relateShape2Polygon(a, b);
+  } else if ((a instanceof Segment || a instanceof Arc) && (b instanceof Circle || b instanceof Box)) {
+    return relateShape2Polygon(a, new Polygon(b));
+  } else if (a instanceof Polygon && b instanceof Polygon) {
+    return relatePolygons(a, b);
+  } else if ((a instanceof Circle || a instanceof Box) && (b instanceof Circle || b instanceof Box)) {
+    return relatePolygons(new Polygon(a), new Polygon(b));
+  } else if ((a instanceof Circle || a instanceof Box) && b instanceof Polygon) {
+    return relatePolygons(new Polygon(a), b);
+  } else if (a instanceof Polygon && (b instanceof Circle || b instanceof Box)) {
+    return relatePolygons(a, new Polygon(b));
   }
-}
+};
 
 function relateLine2Line(line1, line2) {
   let denim = new DE9IM();
@@ -178,7 +123,7 @@ function relateLine2Line(line1, line2) {
 
 function relateLine2Circle(line, circle) {
   let denim = new DE9IM();
-  let ip = intersectLine2Circle(line, circle);
+  let ip = Intersection.intersectLine2Circle(line, circle);
   if (ip.length === 0) {
     denim.I2I = [];
     denim.I2B = [];
@@ -201,7 +146,7 @@ function relateLine2Circle(line, circle) {
     denim.I2B = ip_sorted;
     denim.I2E = [splitShapes[0], splitShapes[2]];
 
-    denim.E2I = new Flatten.Polygon([circle.toArc()]).cut(multiline);
+    denim.E2I = new Polygon([circle.toArc()]).cut(multiline);
   }
 
   return denim;
@@ -242,7 +187,7 @@ function relateLine2Box(line, box) {
       denim.I2B = ip_sorted;
       denim.I2E = [splitShapes[0], splitShapes[2]];
 
-      denim.E2I = new Flatten.Polygon(box.toSegments()).cut(multiline);
+      denim.E2I = new Polygon(box.toSegments()).cut(multiline);
     }
   }
   return denim;
@@ -258,9 +203,9 @@ function relateLine2Polygon(line, polygon) {
 
   [...multiline].forEach((edge) => edge.setInclusion(polygon));
 
-  denim.I2I = [...multiline].filter((edge) => edge.bv === Flatten.INSIDE).map((edge) => edge.shape);
-  denim.I2B = [...multiline].slice(1).map((edge) => (edge.bv === Flatten.BOUNDARY ? edge.shape : edge.shape.start));
-  denim.I2E = [...multiline].filter((edge) => edge.bv === Flatten.OUTSIDE).map((edge) => edge.shape);
+  denim.I2I = [...multiline].filter((edge) => edge.bv === INSIDE).map((edge) => edge.shape);
+  denim.I2B = [...multiline].slice(1).map((edge) => (edge.bv === BOUNDARY ? edge.shape : edge.shape.start));
+  denim.I2E = [...multiline].filter((edge) => edge.bv === OUTSIDE).map((edge) => edge.shape);
 
   denim.E2I = polygon.cut(multiline);
 
@@ -277,22 +222,22 @@ function relateShape2Polygon(shape, polygon) {
 
   [...multiline].forEach((edge) => edge.setInclusion(polygon));
 
-  denim.I2I = [...multiline].filter((edge) => edge.bv === Flatten.INSIDE).map((edge) => edge.shape);
-  denim.I2B = [...multiline].slice(1).map((edge) => (edge.bv === Flatten.BOUNDARY ? edge.shape : edge.shape.start));
-  denim.I2E = [...multiline].filter((edge) => edge.bv === Flatten.OUTSIDE).map((edge) => edge.shape);
+  denim.I2I = [...multiline].filter((edge) => edge.bv === INSIDE).map((edge) => edge.shape);
+  denim.I2B = [...multiline].slice(1).map((edge) => (edge.bv === BOUNDARY ? edge.shape : edge.shape.start));
+  denim.I2E = [...multiline].filter((edge) => edge.bv === OUTSIDE).map((edge) => edge.shape);
 
   denim.B2I = [];
   denim.B2B = [];
   denim.B2E = [];
   for (let pt of [shape.start, shape.end]) {
-    switch (ray_shoot(polygon, pt)) {
-      case Flatten.INSIDE:
+    switch (raycast(polygon, pt)) {
+      case INSIDE:
         denim.B2I.push(pt);
         break;
-      case Flatten.BOUNDARY:
+      case BOUNDARY:
         denim.B2B.push(pt);
         break;
-      case Flatten.OUTSIDE:
+      case OUTSIDE:
         denim.B2E.push(pt);
         break;
       default:
@@ -305,7 +250,7 @@ function relateShape2Polygon(shape, polygon) {
   return denim;
 }
 
-function relatePolygon2Polygon(polygon1, polygon2) {
+const relatePolygons = (polygon1, polygon2) => {
   let denim = new DE9IM();
 
   let [ip_sorted1, ip_sorted2] = BooleanOperations.calculateIntersections(polygon1, polygon2);
@@ -329,4 +274,4 @@ function relatePolygon2Polygon(polygon1, polygon2) {
   // denim.E2E    not relevant meanwhile
 
   return denim;
-}
+};

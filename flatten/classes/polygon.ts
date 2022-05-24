@@ -1,4 +1,4 @@
-import { ray_shoot } from "../algorithms/ray_shooting";
+import { raycast } from "../algorithms/raycasting";
 import * as Intersection from "../algorithms/intersection";
 import * as Relations from "../algorithms/relation";
 import {
@@ -10,12 +10,16 @@ import {
   initializeInclusionFlags,
   insertBetweenIntPoints,
   splitByIntersections,
-} from "../data-structures/smart_intersections";
+} from "../data-structures/smart-intersections";
 import { Multiline } from "./multiline";
 import { intersectEdge2Line } from "../algorithms/intersection";
 import { Inclusion } from "../utils/constants";
 import { Vector } from "./vector";
 import { Edge } from "./edge";
+import { Box } from "./bbox";
+import { Shape } from "..";
+import { Line } from "./line";
+import { Segment } from "./segment";
 
 type VectorLike = Vector | [number, number];
 
@@ -23,7 +27,6 @@ type VectorLike = Vector | [number, number];
  * Class representing a polygon.<br/>
  * Polygon in FlattenJS is a multipolygon comprised from a set of [faces]{@link Flatten.Face}. <br/>
  * Face, in turn, is a closed loop of [edges]{@link Flatten.Edge}, where edge may be segment or circular arc<br/>
- * @type {Polygon}
  */
 export class Polygon {
   /**
@@ -35,16 +38,14 @@ export class Polygon {
    * - array of points (Flatten.Point) <br/>
    * - array of numeric pairs which represent points <br/>
    * - box or circle object <br/>
-   * Alternatively, it is possible to use polygon.addFace method
-   * @param {args} - array of shapes or array of arrays
    */
-  constructor(points: [number, number][]) {
+  constructor(vertices: [number, number][]) {
     this.faces = new PlanarSet();
     this.edges = new PlanarSet();
   }
 
   get box() {
-    return [...this.faces].reduce((acc, face) => acc.merge(face.box), new Flatten.Box());
+    return [...this.faces].reduce((acc, face) => acc.merge(face.box), new Box());
   }
 
   get vertices() {
@@ -94,10 +95,8 @@ export class Polygon {
 
   /**
    * Delete existing face from polygon
-   * @param {Face} face Face to be deleted
-   * @returns {boolean}
    */
-  deleteFace(face) {
+  deleteFace(face: Face) {
     for (let edge of face) {
       this.edges.delete(edge);
     }
@@ -374,13 +373,11 @@ export class Polygon {
   /**
    * Returns true if polygon contains shape: no point of shape lay outside of the polygon,
    * false otherwise
-   * @param {Shape} shape - test shape
-   * @returns {boolean}
    */
-  contains(shape) {
-    if (shape instanceof Flatten.Point) {
-      let rel = ray_shoot(this, shape);
-      return rel === INSIDE || rel === BOUNDARY;
+  contains(shape: Shape) {
+    if (shape instanceof Vector) {
+      let inclusion = raycast(this, shape);
+      return inclusion === Inclusion.Inside || inclusion === Inclusion.Boundary;
     } else {
       return Relations.cover(this, shape);
     }
@@ -391,28 +388,26 @@ export class Polygon {
    * @param {Shape} shape Shape of one of the types Point, Circle, Line, Segment, Arc or Polygon
    * @returns {Number | Segment}
    */
-  distanceTo(shape) {
-    // let {Distance} = Flatten;
-
-    if (shape instanceof Flatten.Point) {
-      let [dist, shortest_segment] = Flatten.Distance.point2polygon(shape, this);
+  distanceTo(shape: Shape) {
+    if (shape instanceof Vector) {
+      const [dist, shortest_segment] = Distance.point2polygon(shape, this);
       shortest_segment = shortest_segment.reverse();
       return [dist, shortest_segment];
     }
 
     if (
-      shape instanceof Flatten.Circle ||
-      shape instanceof Flatten.Line ||
-      shape instanceof Flatten.Segment ||
-      shape instanceof Flatten.Arc
+      shape instanceof Line ||
+      shape instanceof Segment
+      // shape instanceof Circle ||
+      // shape instanceof Arc
     ) {
-      let [dist, shortest_segment] = Flatten.Distance.shape2polygon(shape, this);
+      let [dist, shortest_segment] = Distance.shape2polygon(shape, this);
       shortest_segment = shortest_segment.reverse();
       return [dist, shortest_segment];
     }
 
     /* this method is bit faster */
-    if (shape instanceof Flatten.Polygon) {
+    if (shape instanceof Polygon) {
       let min_dist_and_segment = [Number.POSITIVE_INFINITY, new Flatten.Segment()];
       let dist, shortest_segment;
 

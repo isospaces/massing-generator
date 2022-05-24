@@ -1,4 +1,4 @@
-import { ray_shoot } from "../algorithms/ray_shooting";
+import { raycast } from "../algorithms/raycasting";
 import { Inclusion, Overlap } from "../utils/constants";
 import { EQ } from "../utils/utils";
 import { Line } from "./line";
@@ -78,10 +78,10 @@ export class Edge {
     }
 
     if (this.startInclusion === undefined) {
-      this.startInclusion = ray_shoot(polygon, this.start);
+      this.startInclusion = raycast(polygon, this.start);
     }
     if (this.endInclusion === undefined) {
-      this.endInclusion = ray_shoot(polygon, this.end);
+      this.endInclusion = raycast(polygon, this.end);
     }
     /* At least one end outside - the whole edge outside */
     if (this.startInclusion === Inclusion.Outside || this.endInclusion == Inclusion.Outside) {
@@ -91,7 +91,7 @@ export class Edge {
       this.inclusion = Inclusion.Inside;
     } else {
       /* Both are boundary - check the middle point */
-      let bvMiddle = ray_shoot(polygon, this.middle());
+      let bvMiddle = raycast(polygon, this.middle());
       // let boundary = this.middle().distanceTo(polygon)[0] < 10*Flatten.DP_TOL;
       // let bvMiddle = boundary ? Flatten.BOUNDARY : ray_shoot(polygon, this.middle());
       this.inclusion = bvMiddle;

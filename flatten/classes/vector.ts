@@ -3,7 +3,7 @@ import { EQ, EQ_0, LT } from "../utils/utils";
 import { Line } from "./line";
 import { Segment } from "./segment";
 import Distance from "../algorithms/distance";
-import { Box } from "./box";
+import { Box } from "./bbox";
 
 /** A 2-dimensional vector */
 export class Vector {

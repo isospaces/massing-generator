@@ -1,5 +1,5 @@
 import { Shape } from "..";
-import { Box } from "../classes/box";
+import { Box } from "../classes/bbox";
 import { Line } from "../classes/line";
 import { Segment } from "../classes/segment";
 import { Vector } from "../classes/vector";
