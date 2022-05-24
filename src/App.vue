@@ -3,12 +3,12 @@ import { onMounted, onUnmounted, reactive, Ref, ref } from "vue";
 import { intersects, intersectsPolygon } from "./lib/collision";
 import { generateUnits, UnitGenerationOptions } from "./lib/generation";
 import { computeOmbb, giftwrap, OMBB, pointsToLines } from "./lib/geometry";
-import Line from "./lib/line";
 import { abs, clamp, mod, PI, PI2 } from "./lib/math";
-import { Mesh } from "./lib/mesh";
+import Segment from "./lib/segment";
+import Mesh from "./lib/mesh";
 import Renderer, { PIXELS_PER_METRE } from "./lib/renderer";
 import { throttle, time } from "./lib/utils";
-import Vec2 from "./lib/vec2";
+import Vector from "./lib/vector";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 3;
@@ -25,10 +25,10 @@ const POINTS = [
   [18.249999999999996, -50.9018065109849],
   [47.99717836547641, -34.00696381242349],
   [60.159588124688696, -16.822156332433234],
-].map((p) => new Vec2(p[0], p[1]));
+].map((p) => new Vector(p[0], p[1]));
 
 let renderer = ref<Renderer>();
-let offset = new Vec2(0, 0);
+let offset = new Vector(0, 0);
 let zoom = 1;
 
 const plot = ref(new Mesh(POINTS).setFillColor("#F7F0D5").setName("Plot")) as Ref<Mesh>;
@@ -39,24 +39,24 @@ let activePoint: number | undefined;
 const options: UnitGenerationOptions = reactive({
   count: 50,
   spacing: 0,
-  padding: new Vec2(1, 6),
+  padding: new Vector(1, 6),
   angularThreshold: Math.PI / 16,
 });
 
 const render = () => renderer.value!.render([plot.value, ...units], offset, zoom);
 
-const splitPolygon = (polygon: Vec2[], cellSize: number) => {
+const splitPolygon = (polygon: Vector[], cellSize: number) => {
   const { width, height, tr, tl, bl, br } = computeOmbb(giftwrap(plot.value.shapeWorld));
   const cellCount = (width / cellSize) >> 0;
   console.log(`x: ${width >> 0}, y: ${height >> 0}`, cellCount);
 
-  const output: Vec2[][] = [];
+  const output: Vector[][] = [];
 
   for (let i = 1; i < cellCount; i++) {
     const t = (1 / cellCount) * i;
     const a = tl.lerp(tr, t);
     const b = bl.lerp(br, t);
-    const split = new Line(a, b);
+    const split = new Segment(a, b);
 
     // check for intesection with polygon
     const indices: number[] = [];
@@ -96,7 +96,7 @@ const onMouseWheel = (e: any) => {
 const onPointerDown = (e: PointerEvent) => {
   if (!renderer.value!.vertices) return;
 
-  const position = new Vec2(e.clientX, e.clientY);
+  const position = new Vector(e.clientX, e.clientY);
   console.log("mouse: ", position);
   plot.value.shapeWorld.forEach((p, i) => {
     const point = p.multiplyScalar(PIXELS_PER_METRE).add(renderer.value!.center);
@@ -117,7 +117,7 @@ const onPointerUp = (e: PointerEvent) => {
 const onPointerMove = (e: PointerEvent) => {
   if (activePoint === undefined) return;
 
-  const delta = new Vec2(e.movementX, e.movementY).divideScalar(PIXELS_PER_METRE);
+  const delta = new Vector(e.movementX, e.movementY).divideScalar(PIXELS_PER_METRE);
   plot.value.translatePoint(activePoint, delta);
   render();
 };

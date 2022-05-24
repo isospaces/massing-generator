@@ -1,8 +1,8 @@
 import { pointsToLines } from "./geometry";
-import Line from "./line";
-import Vec2 from "./vec2";
+import Segment from "./segment";
+import Vector from "./vector";
 
-export const intersects = (a: Line, b: Line) => {
+export const intersects = (a: Segment, b: Segment) => {
   if (!a || !b) return null;
 
   const [[x1, y1], [x2, y2]] = a;
@@ -30,7 +30,7 @@ export const intersects = (a: Line, b: Line) => {
   return null;
 };
 
-export const intersectsPolygon = (a: Vec2[], b: Vec2[]) => {
+export const intersectsPolygon = (a: Vector[], b: Vector[]) => {
   const lines1 = pointsToLines(a);
   const lines2 = pointsToLines(b);
 

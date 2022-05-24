@@ -1,6 +1,7 @@
-import Vec2 from "./vec2";
+import Vector from "./vector";
 
-export default class Line extends Array<Vec2> {
+/** Line Segment */
+export default class Segment extends Array<Vector> {
   public get a() {
     return this[0];
   }
@@ -17,7 +18,7 @@ export default class Line extends Array<Vec2> {
     this[1] = value;
   }
 
-  constructor(a: Vec2, b: Vec2) {
+  constructor(a: Vector, b: Vector) {
     super(2);
     this[0] = a;
     this[1] = b;
@@ -25,7 +26,7 @@ export default class Line extends Array<Vec2> {
   }
 
   relative() {
-    return Vec2.sub(this.b, this.a);
+    return Vector.sub(this.b, this.a);
   }
 
   distance() {
@@ -37,6 +38,6 @@ export default class Line extends Array<Vec2> {
   }
 
   clone() {
-    return new Line(this.a, this.b);
+    return new Segment(this.a, this.b);
   }
 }

@@ -1,5 +1,5 @@
-import Vec2 from "./vec2";
-import Line from "./line";
+import Vector from "./vector";
+import Segment from "./segment";
 
 export namespace COLORS {
   export const WHITE = "#ffffff";
@@ -8,13 +8,13 @@ export namespace COLORS {
   export const RED = "#ff0000";
 }
 
-export const createRect = (size: Vec2) => {
-  return [new Vec2(-0.5, -0.5), new Vec2(-0.5, 0.5), new Vec2(0.5, 0.5), new Vec2(0.5, -0.5)].map((p) =>
+export const createRect = (size: Vector) => {
+  return [new Vector(-0.5, -0.5), new Vector(-0.5, 0.5), new Vector(0.5, 0.5), new Vector(0.5, -0.5)].map((p) =>
     p.multiply(size)
   );
 };
 
-export const sortByNormals = (lines: Line[]) => {
+export const sortByNormals = (lines: Segment[]) => {
   return lines;
 };
 

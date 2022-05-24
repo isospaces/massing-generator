@@ -1,17 +1,17 @@
-import Vec2 from "./vec2";
+import Vector from "./vector";
 import { intersectsPolygon } from "./collision";
 
-export class Mesh {
+export default class Mesh {
   public name = "Mesh";
   public strokeColor = "#000";
   public fillColor = "#888";
   public fill = true;
-  private _shape: Vec2[];
-  private _position = new Vec2(0, 0);
+  private _shape: Vector[];
+  private _position = new Vector(0, 0);
   private _rotation = 0;
-  private _shapeWorld: Vec2[] = [];
+  private _shapeWorld: Vector[] = [];
 
-  constructor(shape: Vec2[]) {
+  constructor(shape: Vector[]) {
     this._shape = shape;
     this._shapeWorld = shape;
     this.updateWorldPosition();
@@ -45,7 +45,7 @@ export class Mesh {
     this.setRotation(value);
   }
 
-  public translatePoint(index: number, value: Vec2) {
+  public translatePoint(index: number, value: Vector) {
     this._shape[index] = this._shape[index].add(value);
     this.updateWorldPosition();
     return this;
@@ -56,13 +56,13 @@ export class Mesh {
     return this;
   }
 
-  public setShape(value: Vec2[]) {
+  public setShape(value: Vector[]) {
     this._shape = value;
     this.updateWorldPosition();
     return this;
   }
 
-  public setPosition(value: Vec2) {
+  public setPosition(value: Vector) {
     this._position = value;
     this.updateWorldPosition();
     return this;
@@ -84,7 +84,7 @@ export class Mesh {
     return this;
   }
 
-  public translate(value: Vec2) {
+  public translate(value: Vector) {
     this.position = this._position.add(value);
   }
 
@@ -114,7 +114,7 @@ export class Mesh {
         const radians = this.rotation;
         const cos = Math.cos(radians);
         const sin = Math.sin(radians);
-        position = new Vec2(cos * x + sin * y, cos * y - sin * x);
+        position = new Vector(cos * x + sin * y, cos * y - sin * x);
       }
 
       return position.add(this.position);

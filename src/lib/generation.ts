@@ -1,18 +1,18 @@
-import { Mesh } from "./mesh";
+import Mesh from "./mesh";
 import { createRect } from "./utils";
-import Vec2 from "./vec2";
+import Vector from "./vector";
 import Random from "./random";
 import { PI, cos, sin, mod, sqrt, acos, PI2, abs } from "./math";
 import { pointsToLines, simplify } from "./geometry";
 
-const TYPE_3 = createRect(new Vec2(9.15, 9.1));
-const TYPE_1 = createRect(new Vec2(3.175, 7.63));
-const PARKING_SPACE_SIZE = new Vec2(2.4, 4.8);
+const TYPE_3 = createRect(new Vector(9.15, 9.1));
+const TYPE_1 = createRect(new Vector(3.175, 7.63));
+const PARKING_SPACE_SIZE = new Vector(2.4, 4.8);
 
 export interface UnitGenerationOptions {
   count: number;
   spacing: number;
-  padding: Vec2;
+  padding: Vector;
   angularThreshold: number;
 }
 
@@ -29,7 +29,7 @@ export const generateUnits = (plot: Mesh, options: UnitGenerationOptions) => {
     .map((data) => data.line);
 
   const arr: Mesh[] = [];
-  const dimensions = new Vec2(9.15, 9.1);
+  const dimensions = new Vector(9.15, 9.1);
   const parallelOffset = dimensions.x / 2 + padding.x;
   const distanceCoefficient = dimensions.x + (spacing === 0 ? 0.05 : spacing);
 
@@ -37,7 +37,7 @@ export const generateUnits = (plot: Mesh, options: UnitGenerationOptions) => {
   for (const line of lines) {
     const maxDistance = line.distance();
     const direction = line.relative().normalize();
-    const perpendicular = new Vec2(-direction.y, direction.x);
+    const perpendicular = new Vector(-direction.y, direction.x);
     const perpendicularOffset = perpendicular.multiplyScalar(dimensions.y / 2 + padding.y);
     const angle = Math.atan(direction.y / direction.x);
 
@@ -77,7 +77,7 @@ export const generatePolygon = (minPoints: number, maxPoints: number, minRadius:
   return Array.from(Array(pointCount)).map((p, i) => {
     const angle = step * i;
     const distance = Random.range(minRadius, maxRadius);
-    return new Vec2(cos(angle), sin(angle)).multiplyScalar(distance);
+    return new Vector(cos(angle), sin(angle)).multiplyScalar(distance);
   });
 };
 

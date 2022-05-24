@@ -1,9 +1,9 @@
-import Line from "./line";
+import Segment from "./segment";
 import { mod, PI, acos, min } from "./math";
-import Vec2 from "./vec2";
+import Vector from "./vector";
 
 /** Returns the convex hull of a given polygon. */
-export const giftwrap = (polygon: Vec2[]) => {
+export const giftwrap = (polygon: Vector[]) => {
   if (polygon.length < 3) return [...polygon];
 
   const points = [...polygon];
@@ -13,11 +13,11 @@ export const giftwrap = (polygon: Vec2[]) => {
   for (const p of points) if (p.x < tmp.x) tmp = p; // Find leftmost point
   hull[0] = tmp;
 
-  let ult: Vec2, penult: Vec2, newEnd!: Vec2;
+  let ult: Vector, penult: Vector, newEnd!: Vector;
   let minAngle = Math.PI;
 
   ult = hull[0];
-  penult = new Vec2(ult.x, ult.y + 10);
+  penult = new Vector(ult.x, ult.y + 10);
 
   do {
     minAngle = PI; // Initial value. Any angle must be lower that 2PI
@@ -40,13 +40,13 @@ export const giftwrap = (polygon: Vec2[]) => {
 };
 
 /** Returns the angle between two segments (from three points) */
-export const polarAngle = (a: Vec2, b: Vec2, c: Vec2) => {
+export const polarAngle = (a: Vector, b: Vector, c: Vector) => {
   const x = (a.x - b.x) * (c.x - b.x) + (a.y - b.y) * (c.y - b.y);
   const y = (a.x - b.x) * (c.y - b.y) - (c.x - b.x) * (a.y - b.y);
   return Math.atan2(y, x);
 };
 
-export const simplify = (polygon: Vec2[], angularThreshold: number) => {
+export const simplify = (polygon: Vector[], angularThreshold: number) => {
   const getPoint = (value: number) => polygon[mod(value, polygon.length)];
   return polygon.filter((_, i) => {
     const prev = getPoint(i - 1);
@@ -61,38 +61,38 @@ export const simplify = (polygon: Vec2[], angularThreshold: number) => {
   });
 };
 
-export const pointsToLines = (shape: Vec2[]) => {
-  const lines = new Array<Line>();
+export const pointsToLines = (shape: Vector[]) => {
+  const lines = new Array<Segment>();
   for (let i = 0; i < shape.length - 1; i++) {
-    lines.push(new Line(shape[i], shape[i + 1]));
+    lines.push(new Segment(shape[i], shape[i + 1]));
   }
-  lines.push(new Line(shape[shape.length - 1], shape[0]));
+  lines.push(new Segment(shape[shape.length - 1], shape[0]));
   return lines;
 };
 
-const intersectLines = (start0: Vec2, dir0: Vec2, start1: Vec2, dir1: Vec2) => {
+const intersectLines = (start0: Vector, dir0: Vector, start1: Vector, dir1: Vector) => {
   const dd = dir0.x * dir1.y - dir0.y * dir1.x; // dd=0 => lines are parallel. we don't care as our lines are never parallel.
   const dx = start1.x - start0.x;
   const dy = start1.y - start0.y;
   const t = (dx * dir1.y - dy * dir1.x) / dd;
-  return new Vec2(start0.x + t * dir0.x, start0.y + t * dir0.y);
+  return new Vector(start0.x + t * dir0.x, start0.y + t * dir0.y);
 };
 
 export interface OMBB {
-  points: [Vec2, Vec2, Vec2, Vec2];
+  points: [Vector, Vector, Vector, Vector];
   width: number;
   height: number;
   area: number;
-  up: Vec2;
-  right: Vec2;
-  tl: Vec2;
-  bl: Vec2;
-  tr: Vec2;
-  br: Vec2;
+  up: Vector;
+  right: Vector;
+  tl: Vector;
+  bl: Vector;
+  tr: Vector;
+  br: Vector;
 }
 
 /** Computes the Oriented Minimum Bounding Box (OMBB). */
-export const computeOmbb = (convexHull: Vec2[]) => {
+export const computeOmbb = (convexHull: Vector[]) => {
   let ombb!: OMBB;
   let bestArea = Number.MAX_VALUE;
 
@@ -134,10 +134,10 @@ export const computeOmbb = (convexHull: Vec2[]) => {
   }
 
   // initial caliper lines + directions
-  let left = new Vec2(0, -1);
-  let right = new Vec2(0, 1);
-  let top = new Vec2(-1, 0);
-  let up = new Vec2(1, 0);
+  let left = new Vector(0, -1);
+  let right = new Vector(0, 1);
+  let top = new Vector(-1, 0);
+  let up = new Vector(1, 0);
 
   // execute rotating caliper algorithm
   for (let i = 0; i < count; i++) {
@@ -202,14 +202,14 @@ export const computeOmbb = (convexHull: Vec2[]) => {
 };
 
 const createOmbb = (
-  leftStart: Vec2,
-  left: Vec2,
-  rightStart: Vec2,
-  right: Vec2,
-  topStart: Vec2,
-  up: Vec2,
-  bottomStart: Vec2,
-  down: Vec2
+  leftStart: Vector,
+  left: Vector,
+  rightStart: Vector,
+  right: Vector,
+  topStart: Vector,
+  up: Vector,
+  bottomStart: Vector,
+  down: Vector
 ): OMBB => {
   // corners
   const tl = intersectLines(leftStart, left, topStart, up);
@@ -234,12 +234,4 @@ const createOmbb = (
     br,
     tr,
   };
-};
-
-const splitPolygon = (polygon: Vec2[], rayOrig: Vec2, rayDir: Vec2) => {
-  if (!polygon || polygon.length < 3) throw new Error("input polygon must have at least 3 vertices");
-
-  //sort inter points by distance from the ray origin
-
-  return output;
 };

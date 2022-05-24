@@ -1,13 +1,13 @@
 import { mod } from "./math";
 import { Mesh } from "./mesh";
-import Vec2 from "./vec2";
+import Vector from "./vector";
 
 export const PIXELS_PER_METRE = 4;
 
 export default class Renderer {
   public readonly ctx: CanvasRenderingContext2D;
-  public readonly center: Vec2;
-  public size: Vec2;
+  public readonly center: Vector;
+  public size: Vector;
   public outlines = true;
   public annotations = false;
   public vertices = false;
@@ -20,7 +20,7 @@ export default class Renderer {
     // setup canvas size and dpr
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
-    this.size = new Vec2(rect.width * dpr, rect.height * dpr);
+    this.size = new Vector(rect.width * dpr, rect.height * dpr);
     canvas.width = this.size.x;
     canvas.height = this.size.y;
     this.ctx.scale(dpr, dpr);
@@ -37,7 +37,7 @@ export default class Renderer {
     this.ctx.lineWidth = 1;
   }
 
-  public render(scene: Mesh[], offset: Vec2, zoom = 1) {
+  public render(scene: Mesh[], offset: Vector, zoom = 1) {
     console.time("render");
     const [w, h] = this.size;
     const pixelScale = PIXELS_PER_METRE * zoom;
@@ -84,14 +84,14 @@ export default class Renderer {
     }
   }
 
-  private renderVertex(position: Vec2, radius: number) {
+  private renderVertex(position: Vector, radius: number) {
     const [x, y] = position;
     this.ctx.beginPath();
     this.ctx.ellipse(x, y, radius, radius, 0, 0, 360);
     this.ctx.fill();
   }
 
-  private renderGrid = (offset: Vec2, pixelScale: number) => {
+  private renderGrid = (offset: Vector, pixelScale: number) => {
     const [dx, dy] = offset;
     const [w, h] = this.size;
 
